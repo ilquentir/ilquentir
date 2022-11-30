@@ -11,5 +11,5 @@ Telegram bot, fetch
 ## Development
 
 1. Ensure [Rust](https://rust-lang.org) is installed
-2. Create `.env` file with
+2. Create `.env` file with variables described in [Deployment](#deployment) section
 3. Run, for example via `cargo run`
