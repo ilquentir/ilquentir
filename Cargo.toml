@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    'ilquentir-bot'
+]
+
+[workspace.package]
+version = "0.0.0"
+authors = ["utterstep"]
+
+[workspace.dependencies]
+dotenvy = "0.15"
+color-eyre = "0.6"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "parking_lot"] }
+tokio = { version = "1", features = ["full"] }

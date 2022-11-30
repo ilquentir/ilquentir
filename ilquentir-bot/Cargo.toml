@@ -1,0 +1,32 @@
+[package]
+name = "ilquentir-bot"
+version = { workspace = true }
+authors = { workspace = true }
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dotenvy = { workspace = true }
+color-eyre = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+dptree = "0.3"
+time = "0.3"
+
+[dependencies.teloxide]
+version = "0.11"
+default-features = false
+features = [
+    "rustls",
+    "ctrlc_handler",
+    "throttle",
+    "trace-adaptor",
+    "macros",
+]
+
+[dependencies.sqlx]
+version = "0.6"
+features = ["runtime-tokio-rustls", "postgres", "offline", "time"]
