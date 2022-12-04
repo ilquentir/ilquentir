@@ -99,6 +99,7 @@ impl Poll {
         Ok(inserted)
     }
 
+    #[tracing::instrument]
     async fn insert<'t>(self, transaction: &mut PgTransaction<'t>) -> Result<Self> {
         Ok(sqlx::query_as!(
             Poll,
@@ -229,13 +230,13 @@ WHERE
         .await?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(bot))]
     pub async fn publish_to_tg<'t>(
         mut self,
         transaction: &mut PgTransaction<'t>,
         bot: &Bot,
     ) -> Result<Self> {
-        debug!(poll = self.id, "sending poll");
+        info!(poll_id = self.id, "sending poll");
         let poll_options = self.kind.options();
 
         let poll_payload = SendPoll::new(
@@ -246,14 +247,14 @@ WHERE
         .allows_multiple_answers(self.kind.allows_multiple_answers());
         let poll_message = JsonRequest::new(bot.clone(), poll_payload).await?;
 
-        info!(poll = self.id, "poll sent");
+        info!(poll_id = self.id, "poll sent");
 
         // FIXME: do not clone here
         if let MessageKind::Common(message) = poll_message.kind.clone() {
             if let MediaKind::Poll(tg_poll) = message.media_kind {
                 debug!(
-                    poll = self.id,
-                    user = self.chat_tg_id,
+                    poll_id = self.id,
+                    user_id = self.chat_tg_id,
                     poll_tg_id = tg_poll.poll.id,
                     "poll sent"
                 );
@@ -267,8 +268,8 @@ WHERE
                     .await?
                     .expect("post update failed");
                 debug!(
-                    poll = poll.id,
-                    user = poll.chat_tg_id,
+                    poll_id = poll.id,
+                    user_id = poll.chat_tg_id,
                     poll_tg_id = tg_poll.poll.id,
                     "saved that poll is published"
                 );
@@ -277,9 +278,9 @@ WHERE
                 let prev_id = poll.id;
                 let next_poll = poll.schedule_next(&mut *transaction).await?;
                 info!(
-                    poll = prev_id,
-                    next_poll = next_poll.id,
-                    user = next_poll.chat_tg_id,
+                    poll_id = prev_id,
+                    next_poll_id = next_poll.id,
+                    user_id = next_poll.chat_tg_id,
                     "scheduled new poll"
                 );
 

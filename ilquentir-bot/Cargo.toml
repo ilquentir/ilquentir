@@ -24,7 +24,7 @@ dptree = "0.3"
 time = "0.3"
 
 [dependencies.teloxide]
-version = "0.11.0"
+version = "0.11"
 default-features = false
 features = [
     "rustls",

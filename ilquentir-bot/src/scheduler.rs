@@ -52,7 +52,7 @@ impl Scheduler {
             let schedule_result = handle_scheduled(bot, pool).await;
 
             if let Err(e) = schedule_result {
-                error!(schedule_error = %e, "got an error while scheduling");
+                error!(error = %e, "got an error while scheduling");
                 self.dispatcher_shutdown_token.shutdown()?.await;
 
                 return Err(e);

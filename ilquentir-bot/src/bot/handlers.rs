@@ -8,8 +8,10 @@ use teloxide::{
 
 use tracing::{info, warn};
 
-use super::commands::Command;
+mod command_handlers;
+
 use crate::models::{Poll, PollAnswer, User};
+use super::commands::Command;
 
 #[tracing::instrument(skip(bot, pool))]
 pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Command) -> Result<()> {
@@ -58,13 +60,17 @@ pub async fn handle_poll_update(bot: Bot, pool: PgPool, update: Update) -> Resul
     info!(user_id, chat_id, "start processing update");
 
     if let UpdateKind::Poll(poll) = update.kind {
+        info!(user_id, chat_id, poll_id = poll.id, "got Poll update, saving data");
         let mut txn = pool.begin().await?;
 
         let poll = PollAnswer::save_answer(&mut txn, &poll).await?;
+
+        info!(user_id, chat_id, poll_id = poll.tg_id, "data saved, sending the reply");
         bot.send_message(
             poll.chat_tg_id.to_string(),
             "Thanks! When we'll be ready with stats – you'll know!\n\nIn case of having any questions – write @utterstep"
         ).await?;
+        info!(user_id, chat_id, poll_id = poll.tg_id, "reply sent, commiting txn");
 
         txn.commit().await?;
     } else {
@@ -91,10 +97,11 @@ pub async fn handle_scheduled(bot: &Bot, pool: &PgPool) -> Result<()> {
 
     for poll in polls {
         info!(
-            poll = poll.id,
-            user = poll.chat_tg_id,
+            poll_id = poll.id,
+            user_id = poll.chat_tg_id,
             "sending scheduled poll"
         );
+
         let mut txn = pool.begin().await?;
 
         poll.publish_to_tg(&mut txn, bot).await?;
