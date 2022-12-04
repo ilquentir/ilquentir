@@ -10,11 +10,15 @@ edition = "2021"
 dotenvy = { workspace = true }
 color-eyre = { workspace = true }
 tokio = { workspace = true }
+
+tonic = { version = "0.8", features = ["tls", "tls-roots"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+tracing-tree = { workspace = true }
 tracing-opentelemetry = "0.18"
 opentelemetry = { version = "0.18", features = ["rt-tokio"] }
-opentelemetry-otlp = "0.11"
+opentelemetry-otlp = { version = "0.11", features = ["tls"] }
+webpki-roots = "0.22"
 
 dptree = "0.3"
 time = "0.3"

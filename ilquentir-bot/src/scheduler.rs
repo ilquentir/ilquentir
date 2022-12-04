@@ -21,6 +21,9 @@ pub struct Scheduler {
 pub struct ShutdownToken(Arc<AtomicBool>);
 
 impl ShutdownToken {
+    /// Stops the scheduler.
+    ///
+    /// Scheduler waits for the next tick to stop.
     pub fn shutdown(&self) {
         self.0.store(false, std::sync::atomic::Ordering::Release)
     }

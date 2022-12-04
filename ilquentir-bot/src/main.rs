@@ -8,18 +8,16 @@ mod bot;
 mod models;
 mod poll;
 mod scheduler;
+mod tracing_setup;
 
 use crate::{bot::create_bot_dispatcher, scheduler::Scheduler};
 
 pub static MIGRATOR: Migrator = sqlx::migrate!();
 
 #[tokio::main]
-#[tracing::instrument]
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
-    tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-        .init();
+    tracing_setup::setup()?;
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL should be set");
 
@@ -34,6 +32,8 @@ async fn main() -> Result<()> {
     dispatcher.dispatch().await;
     info!("dispatcher stopped working, shutting down scheduler");
     scheduler_shutdown_token.shutdown();
+
+    tracing_setup::teardown();
 
     Ok(())
 }
