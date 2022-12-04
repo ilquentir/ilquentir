@@ -11,6 +11,7 @@ use tracing::{info, warn};
 use super::commands::Command;
 use crate::models::{Poll, PollAnswer, User};
 
+#[tracing::instrument(skip(bot, pool))]
 pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Command) -> Result<()> {
     let mut txn = pool.begin().await?;
 
@@ -49,6 +50,7 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
     Ok(())
 }
 
+#[tracing::instrument(skip(bot, pool))]
 pub async fn handle_poll_update(bot: Bot, pool: PgPool, update: Update) -> Result<()> {
     let user_id = update.user().map(|u| u.id.0);
     let chat_id = update.chat().map(|c| c.id.0);
@@ -72,7 +74,8 @@ pub async fn handle_poll_update(bot: Bot, pool: PgPool, update: Update) -> Resul
     Ok(())
 }
 
-pub async fn handle_scheduled(bot: Bot, pool: PgPool) -> Result<()> {
+#[tracing::instrument(skip(bot, pool))]
+pub async fn handle_scheduled(bot: &Bot, pool: &PgPool) -> Result<()> {
     let mut txn = pool.begin().await?;
 
     info!("checking if there exist some unsent polls");
@@ -94,7 +97,7 @@ pub async fn handle_scheduled(bot: Bot, pool: PgPool) -> Result<()> {
         );
         let mut txn = pool.begin().await?;
 
-        poll.publish_to_tg(&mut txn, &bot).await?;
+        poll.publish_to_tg(&mut txn, bot).await?;
 
         txn.commit().await?;
     }

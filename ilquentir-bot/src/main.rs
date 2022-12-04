@@ -1,32 +1,22 @@
-use std::{env, time::Duration};
+use std::{env, time::Duration, sync::{atomic::AtomicBool, Arc}};
 
 use color_eyre::Result;
 use sqlx::migrate::Migrator;
-use teloxide::{
-    dispatching::{HandlerExt, UpdateFilterExt},
-    prelude::Dispatcher,
-    requests::Requester,
-    types::{Update, UpdateKind},
-    utils::command::BotCommands,
-    Bot,
-};
 use tokio::time::interval;
-use tracing::error;
+use tracing::{info, error};
 
 mod bot;
 mod models;
 mod poll;
 
-use bot::{
-    commands::Command,
-    handlers::{handle_command, handle_poll_update, handle_scheduled},
-};
+use crate::bot::{handlers::handle_scheduled, create_bot_dispatcher};
 
 pub static MIGRATOR: Migrator = sqlx::migrate!();
 
+#[tracing::instrument]
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenvy::dotenv()?;
+    dotenvy::dotenv().ok();
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
@@ -34,54 +24,38 @@ async fn main() -> Result<()> {
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL should be set");
 
     let pool = sqlx::PgPool::connect(&db_url).await?;
-
-    // migrate on start
     MIGRATOR.run(&pool).await?;
-    // Note that the compiler won't pick up new migrations if no Rust source files have changed.
-    // You can create a Cargo build script to work around this with `sqlx migrate build-script`.
 
-    let bot = Bot::from_env();
-    bot.set_my_commands(bot::commands::Command::bot_commands())
-        .await?;
+    let (mut dispatcher, bot) = create_bot_dispatcher(pool.clone()).await?;
+    let dispatcher_shutdown_token = dispatcher.shutdown_token();
+    let scheduler_shutdown_token = Arc::new(AtomicBool::new(false));
+    let scheduler_token_clone = scheduler_shutdown_token.clone();
 
-    let handler = dptree::entry()
-        .branch(
-            Update::filter_message().branch(
-                dptree::entry()
-                    .filter_command::<Command>()
-                    .endpoint(handle_command),
-            ),
-        )
-        .branch(
-            dptree::entry()
-                .filter(|update: Update| matches!(update.kind, UpdateKind::Poll(_)))
-                .endpoint(handle_poll_update),
-        );
-
-    let mut dispatcher = Dispatcher::builder(bot.clone(), handler)
-        .dependencies(dptree::deps![pool.clone()])
-        .enable_ctrlc_handler()
-        .build();
-    let shutdown_token = dispatcher.shutdown_token();
-    let scheduler = tokio::spawn(async move {
+    tokio::spawn(async move {
         let mut interval = interval(Duration::from_secs(60));
 
         loop {
             interval.tick().await;
-            let schedule_result = handle_scheduled(bot.clone(), pool.clone()).await;
+            let schedule_result = handle_scheduled(&bot, &pool).await;
 
             if let Err(e) = schedule_result {
                 error!(schedule_error = %e, "got an error while scheduling");
-                shutdown_token.shutdown()?.await;
-                break;
+                dispatcher_shutdown_token.shutdown()?.await;
+
+                return Err(e);
             };
+
+            if scheduler_token_clone.load(std::sync::atomic::Ordering::Acquire) {
+                info!("scheduler shut down");
+
+                break;
+            }
         }
-
-        #[allow(unreachable_code)]
-        Result::<()>::Ok(())
+        Ok(())
     });
-
-    tokio::join!(dispatcher.dispatch(), scheduler).1??;
+    dispatcher.dispatch().await;
+    info!("dispatcher stopped working, shutting down scheduler");
+    scheduler_shutdown_token.store(true, std::sync::atomic::Ordering::Release);
 
     Ok(())
 }
