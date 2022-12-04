@@ -1,8 +1,8 @@
 use color_eyre::{eyre::Result, Report};
 use sqlx::PgPool;
 use teloxide::{
-    dispatching::{HandlerExt, UpdateFilterExt, DefaultKey},
-    prelude::Dispatcher,
+    dispatching::{DefaultKey, HandlerExt, UpdateFilterExt},
+    prelude::Dispatcher as TgDispatcher,
     requests::Requester,
     types::{Update, UpdateKind},
     utils::command::BotCommands,
@@ -17,7 +17,9 @@ use self::{
     handlers::{handle_command, handle_poll_update},
 };
 
-pub async fn create_bot_dispatcher(pool: PgPool) -> Result<(Dispatcher<Bot, Report, DefaultKey>, Bot)> {
+pub type Dispatcher = TgDispatcher<Bot, Report, DefaultKey>;
+
+pub async fn create_bot_dispatcher(pool: PgPool) -> Result<(Dispatcher, Bot)> {
     let bot = Bot::from_env();
     bot.set_my_commands(commands::Command::bot_commands())
         .await?;
@@ -36,8 +38,11 @@ pub async fn create_bot_dispatcher(pool: PgPool) -> Result<(Dispatcher<Bot, Repo
                 .endpoint(handle_poll_update),
         );
 
-    Ok((Dispatcher::builder(bot.clone(), handler)
-        .dependencies(dptree::deps![pool])
-        .enable_ctrlc_handler()
-        .build(), bot))
+    Ok((
+        Dispatcher::builder(bot.clone(), handler)
+            .dependencies(dptree::deps![pool])
+            .enable_ctrlc_handler()
+            .build(),
+        bot,
+    ))
 }
