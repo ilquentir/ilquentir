@@ -9,8 +9,6 @@ use crate::models::{Poll, User};
 
 #[tracing::instrument(skip(bot, txn))]
 pub async fn handle_start(bot: &Bot, txn: &mut Transaction<'_, Postgres>, chat_id: i64) -> Result<()> {
-    let user = User::activate(&mut *txn, chat_id).await?;
-
     info!(chat_id, "processing Start command");
 
     let user = User::activate(&mut *txn, chat_id).await?;

@@ -11,6 +11,8 @@ use tracing::{info, warn};
 mod command_handlers;
 
 use crate::models::{Poll, PollAnswer, User};
+use self::command_handlers::handle_start;
+
 use super::commands::Command;
 
 #[tracing::instrument(skip(bot, pool))]
@@ -19,15 +21,7 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
 
     match command {
         Command::Start => {
-            info!(chat_id = %msg.chat.id, "processing Start command");
-
-            let user = User::activate(&mut txn, msg.chat.id.0).await?;
-            info!(chat_id = %msg.chat.id, user_id = user.tg_id, "(re?) activated user");
-
-            Poll::create_for_user(&mut txn, &user).await?;
-
-            bot.send_message(msg.chat.id, "Hello! Ilquentir welcomes you.")
-                .await?;
+            handle_start(&bot, &mut txn, msg.chat.id.0).await?;
         }
         Command::Stop => {
             info!(chat_id = %msg.chat.id, "processing Stop command");
