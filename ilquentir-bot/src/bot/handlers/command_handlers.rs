@@ -77,7 +77,9 @@ pub async fn handle_start(
     bot.send_message(
         chat_id_wrapped,
 r#"Log your status daily, track your feelings and notice trends.
-Every week we will be sending you stats about personal and communal trends."#,
+Every week we will be sending you stats about personal and communal trends.
+
+Your daily poll will be sent to you at 19:00 UTC. In your first poll, give an answer for the previous day :)"#,
     )
     .await?;
     JsonRequest::new(bot.clone(), payload.clone()).await?;
