@@ -235,15 +235,19 @@ WHERE
             r#"
 SELECT
     id as "id?",
-    tg_id,
+    polls.tg_id as tg_id,
     chat_tg_id,
     kind as "kind: PollKind",
     publication_date,
     published
 FROM polls
+JOIN users
+ON
+    polls.chat_tg_id = users.tg_id
 WHERE
-    NOT published
-    AND publication_date < NOW()
+    NOT polls.published
+    AND polls.publication_date < NOW()
+    AND users.active
             "#
         )
         .fetch_all(transaction)
