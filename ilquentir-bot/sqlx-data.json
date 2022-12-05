@@ -156,6 +156,26 @@
     },
     "query": "\nINSERT INTO poll_answers (poll_tg_id, selected_value)\nVALUES ($1, $2)\nRETURNING poll_tg_id, selected_value\n                "
   },
+  "9c71504b0686d369691963a15c574ee07a1ef5037c4ac13e0b1974f6c43db14a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "n_answered!",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\nSELECT COUNT(DISTINCT poll.tg_id) as \"n_answered!\"\nFROM polls AS poll\nJOIN poll_answers AS answer\nON poll.tg_id = answer.poll_tg_id\nWHERE poll.chat_tg_id = $1\n            "
+  },
   "baae46e939089f19236d02e6de1c6c69bbb0636ae28dcc592c0cc074be345dd7": {
     "describe": {
       "columns": [
