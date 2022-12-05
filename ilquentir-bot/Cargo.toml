@@ -22,6 +22,7 @@ webpki-roots = "0.22"
 
 dptree = "0.3"
 time = "0.3"
+rand = { workspace = true }
 
 [dependencies.teloxide]
 version = "0.11"

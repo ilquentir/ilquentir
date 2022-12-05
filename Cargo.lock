@@ -833,13 +833,14 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-bot"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "color-eyre",
  "dotenvy",
  "dptree",
  "opentelemetry",
  "opentelemetry-otlp",
+ "rand",
  "sqlx",
  "teloxide",
  "time",

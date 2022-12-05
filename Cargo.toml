@@ -4,7 +4,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.0.0"
+version = "0.1.0"
 authors = ["utterstep"]
 
 [workspace.dependencies]
@@ -14,3 +14,4 @@ tracing = "0.1"
 tracing-tree = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "parking_lot"] }
 tokio = { version = "1", features = ["full"] }
+rand = "0.8"

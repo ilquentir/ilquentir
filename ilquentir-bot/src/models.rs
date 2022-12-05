@@ -54,6 +54,26 @@ RETURNING tg_id, active
     }
 
     #[tracing::instrument]
+    pub async fn count_answered_polls<'t>(
+        transaction: &mut PgTransaction<'t>,
+        user_id: i64,
+    ) -> Result<i64> {
+        Ok(sqlx::query!(
+            r#"
+SELECT COUNT(DISTINCT poll.tg_id) as "n_answered!"
+FROM polls AS poll
+JOIN poll_answers AS answer
+ON poll.tg_id = answer.poll_tg_id
+WHERE poll.chat_tg_id = $1
+            "#,
+            user_id,
+        )
+        .fetch_one(transaction)
+        .await?
+        .n_answered)
+    }
+
+    #[tracing::instrument]
     pub fn subscribed_for_polls(&self) -> Vec<PollKind> {
         vec![PollKind::HowWasYourDay]
     }

@@ -11,6 +11,7 @@ use teloxide::{
 
 pub mod commands;
 pub mod handlers;
+mod helpers;
 
 use self::{
     commands::Command,
