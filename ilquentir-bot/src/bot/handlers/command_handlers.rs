@@ -54,6 +54,16 @@ pub async fn handle_start(
     chat_id: i64,
 ) -> Result<()> {
     info!(chat_id, "processing Start command");
+    let chat_id_wrapped = ChatId(chat_id);
+
+    if let Some(user) = User::get_user_by_id(&mut *txn, chat_id).await? {
+        info!(chat_id, user_id = user.tg_id, "user already exists and active :)");
+
+        bot.send_message(chat_id_wrapped, "Hello again! Nice to see you again :)")
+            .await?;
+
+        return Ok(());
+    }
 
     let user = User::activate(&mut *txn, chat_id).await?;
     info!(chat_id, user_id = user.tg_id, "(re?) activated user");
@@ -65,8 +75,6 @@ pub async fn handle_start(
         user_id = user.tg_id,
         "sending welcome sequence to user"
     );
-    let chat_id_wrapped = ChatId(chat_id);
-
     bot.send_message(chat_id_wrapped, "Hello! Ilquentir welcomes you.")
         .await?;
     let payload = SendChatAction::new(chat_id_wrapped, teloxide::types::ChatAction::Typing);

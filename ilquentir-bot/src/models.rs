@@ -22,6 +22,24 @@ type PgTransaction<'t> = Transaction<'t, Postgres>;
 
 impl User {
     #[tracing::instrument]
+    pub async fn get_user_by_id<'t>(transaction: &mut PgTransaction<'t>, user_id: i64) -> Result<Option<Self>> {
+        Ok(sqlx::query_as!(
+            User,
+            r#"
+UPDATE users
+SET
+    active = true
+WHERE
+    tg_id = $1
+RETURNING tg_id, active
+            "#,
+            user_id,
+        )
+        .fetch_optional(&mut *transaction)
+        .await?)
+    }
+
+    #[tracing::instrument]
     pub async fn activate<'t>(transaction: &mut PgTransaction<'t>, user_id: i64) -> Result<Self> {
         Ok(sqlx::query_as!(
             User,
