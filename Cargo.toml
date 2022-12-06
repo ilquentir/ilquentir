@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    'ilquentir-bot'
+    'ilquentir-bot',
+    'ilquentir-giphy',
 ]
 
 [workspace.package]
@@ -15,3 +16,4 @@ tracing-tree = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "parking_lot"] }
 tokio = { version = "1", features = ["full"] }
 rand = "0.8"
+url = "2"

@@ -24,6 +24,8 @@ dptree = "0.3"
 time = "0.3"
 rand = { workspace = true }
 
+ilquentir-giphy = { path = "../ilquentir-giphy" }
+
 [dependencies.teloxide]
 version = "0.11"
 default-features = false

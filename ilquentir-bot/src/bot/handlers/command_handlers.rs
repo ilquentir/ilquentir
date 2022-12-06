@@ -16,7 +16,7 @@ use crate::{
     models::{Poll, User},
 };
 
-#[tracing::instrument(skip(bot, pool))]
+#[tracing::instrument(skip(bot, pool), err)]
 pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Command) -> Result<()> {
     let mut txn = pool.begin().await?;
 
@@ -47,7 +47,7 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
     Ok(())
 }
 
-#[tracing::instrument(skip(bot, txn))]
+#[tracing::instrument(skip(bot, txn), err)]
 pub async fn handle_start(
     bot: &Bot,
     txn: &mut Transaction<'_, Postgres>,
@@ -59,7 +59,7 @@ pub async fn handle_start(
     if let Some(user) = User::get_user_by_id(&mut *txn, chat_id).await? {
         info!(chat_id, user_id = user.tg_id, "user already exists and active :)");
 
-        bot.send_message(chat_id_wrapped, "Hello again! Nice to see you again :)")
+        bot.send_message(chat_id_wrapped, "Hello! Nice to see you again :)")
             .await?;
 
         return Ok(());

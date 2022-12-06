@@ -156,32 +156,6 @@
     },
     "query": "\nINSERT INTO poll_answers (poll_tg_id, selected_value)\nVALUES ($1, $2)\nRETURNING poll_tg_id, selected_value\n                "
   },
-  "5eea58ccb676c1f0f038251a2cea99fd904bcdcc8b62b2f75ac67cf28fd50f0f": {
-    "describe": {
-      "columns": [
-        {
-          "name": "tg_id",
-          "ordinal": 0,
-          "type_info": "Int8"
-        },
-        {
-          "name": "active",
-          "ordinal": 1,
-          "type_info": "Bool"
-        }
-      ],
-      "nullable": [
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Int8"
-        ]
-      }
-    },
-    "query": "\nUPDATE users\nSET\n    active = true\nWHERE\n    tg_id = $1\nRETURNING tg_id, active\n            "
-  },
   "675d99ce9db8d89d365a4cea9320d7084a62664ff98f8ab46a96f1b7b0dbf245": {
     "describe": {
       "columns": [
@@ -249,6 +223,32 @@
       }
     },
     "query": "\nSELECT COUNT(DISTINCT poll.tg_id) as \"n_answered!\"\nFROM polls AS poll\nJOIN poll_answers AS answer\nON poll.tg_id = answer.poll_tg_id\nWHERE poll.chat_tg_id = $1\n            "
+  },
+  "aecab9eb2a73bdf0c84674328a9ad9839540b879a271c8dd7ee68edf9aabf7af": {
+    "describe": {
+      "columns": [
+        {
+          "name": "tg_id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "active",
+          "ordinal": 1,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\nSELECT tg_id, active\nFROM users\nWHERE\n    tg_id = $1\n    AND active\n            "
   },
   "baae46e939089f19236d02e6de1c6c69bbb0636ae28dcc592c0cc074be345dd7": {
     "describe": {

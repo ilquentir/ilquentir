@@ -21,17 +21,16 @@ pub struct User {
 type PgTransaction<'t> = Transaction<'t, Postgres>;
 
 impl User {
-    #[tracing::instrument]
+    #[tracing::instrument(skip(transaction), err)]
     pub async fn get_user_by_id<'t>(transaction: &mut PgTransaction<'t>, user_id: i64) -> Result<Option<Self>> {
         Ok(sqlx::query_as!(
             User,
             r#"
-UPDATE users
-SET
-    active = true
+SELECT tg_id, active
+FROM users
 WHERE
     tg_id = $1
-RETURNING tg_id, active
+    AND active
             "#,
             user_id,
         )
@@ -39,7 +38,7 @@ RETURNING tg_id, active
         .await?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(transaction), err)]
     pub async fn activate<'t>(transaction: &mut PgTransaction<'t>, user_id: i64) -> Result<Self> {
         Ok(sqlx::query_as!(
             User,
@@ -55,7 +54,7 @@ RETURNING tg_id, active
         .await?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(transaction), err)]
     pub async fn deactivate<'t>(transaction: &mut PgTransaction<'t>, user_id: i64) -> Result<Self> {
         Ok(sqlx::query_as!(
             User,
@@ -71,7 +70,7 @@ RETURNING tg_id, active
         .await?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(transaction), err)]
     pub async fn count_answered_polls<'t>(
         transaction: &mut PgTransaction<'t>,
         user_id: i64,
@@ -108,7 +107,7 @@ pub struct Poll {
 }
 
 impl Poll {
-    #[tracing::instrument]
+    #[tracing::instrument(err)]
     pub async fn create_for_user(
         transaction: &mut Transaction<'_, Postgres>,
         user: &User,
@@ -137,7 +136,7 @@ impl Poll {
         Ok(inserted)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(transaction), err)]
     async fn insert<'t>(self, transaction: &mut PgTransaction<'t>) -> Result<Self> {
         Ok(sqlx::query_as!(
             Poll,
@@ -166,7 +165,7 @@ RETURNING
         .await?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(transaction), err)]
     pub async fn schedule_next<'t>(self, transaction: &mut PgTransaction<'t>) -> Result<Poll> {
         let next_at = self.kind.schedule_next(self.publication_date);
         let poll = Poll {
@@ -178,7 +177,7 @@ RETURNING
         poll.insert(transaction).await
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(transaction), err)]
     pub async fn update<'t>(self, transaction: &mut PgTransaction<'t>) -> Result<Option<Self>> {
         let id = if let Some(id) = self.id {
             id
@@ -221,7 +220,7 @@ RETURNING
         ))
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(transaction), err)]
     pub async fn get_by_tg_id<'t, S: AsRef<str> + Debug>(
         transaction: &mut PgTransaction<'t>,
         tg_id: S,
@@ -246,7 +245,7 @@ WHERE
         .await?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(transaction), err)]
     pub async fn get_pending<'t>(transaction: &mut PgTransaction<'t>) -> Result<Vec<Self>> {
         Ok(sqlx::query_as!(
             Poll,
@@ -272,7 +271,7 @@ WHERE
         .await?)
     }
 
-    #[tracing::instrument(skip(bot))]
+    #[tracing::instrument(skip(bot), err)]
     pub async fn publish_to_tg<'t>(
         mut self,
         transaction: &mut PgTransaction<'t>,
@@ -347,7 +346,7 @@ pub struct PollAnswer {
 }
 
 impl PollAnswer {
-    #[tracing::instrument]
+    #[tracing::instrument(skip(transaction), err)]
     pub async fn save_answer<'t>(
         transaction: &mut PgTransaction<'t>,
         tg_poll: &TgPoll,
