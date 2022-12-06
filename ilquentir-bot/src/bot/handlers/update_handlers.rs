@@ -46,10 +46,13 @@ pub async fn handle_poll_update(
             "data saved, sending the reply"
         );
 
+        // let's finish the transaction before lots of communication with external APIs
+        txn.commit().await?;
+
         let chat_id = poll.chat_tg_id;
         set_typing(&bot, chat_id, Some(Duration::from_millis(200))).await?;
 
-        if User::count_answered_polls(&mut txn, poll.chat_tg_id).await? == 1 {
+        if User::count_answered_polls(&mut pool.begin().await?, poll.chat_tg_id).await? == 1 {
             // first user poll, send detailed info
             let photo_payload = SendPhoto::new(
                 chat_id.to_string(),
@@ -93,8 +96,6 @@ Keep answering to see your personal dynamics per se and in comparison to the com
             poll_id = poll.tg_id,
             "reply sent, commiting txn"
         );
-
-        txn.commit().await?;
     } else {
         warn!(user_id, chat_id, update = ?update, "unexpected update type");
     }
