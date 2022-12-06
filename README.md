@@ -11,6 +11,7 @@
   * `HONEYCOMB_KEY` – Honeycomb.io API KEY
   * `ENVIRONMENT` – application environment
   * `RUST_LOG` – desired log level
+  * `GIPHY_KEY` – API key for [Giphy API](https://developers.giphy.com/). Used to send cat GIFs :)
 
 ## Development
 
