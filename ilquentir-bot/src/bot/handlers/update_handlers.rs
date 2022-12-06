@@ -5,7 +5,7 @@ use ilquentir_giphy::GiphyApi;
 use sqlx::PgPool;
 use teloxide::{
     payloads::{SendAnimation, SendMessage, SendMessageSetters, SendPhoto},
-    requests::{JsonRequest, Requester},
+    requests::JsonRequest,
     types::{InputFile, Update, UpdateKind},
     Bot,
 };
@@ -79,11 +79,12 @@ Keep answering to see your personal dynamics per se and in comparison to the com
             JsonRequest::new(bot.clone(), photo_payload).await?;
 
             info!(user_id, chat_id, "sending message");
-            bot.send_message(
+            let message_payload = SendMessage::new(
                 chat_id.to_string(),
-                r#"Thanks! I'm getting __smarter every day__, soon I'll be back with some stat for you :)"#,
+                r#"Thanks\! I'm getting _smarter every day_, soon I'll be back with some stat for you :\)"#,
             )
-            .await?;
+            .parse_mode(teloxide::types::ParseMode::MarkdownV2);
+            JsonRequest::new(bot.clone(), message_payload).await?;
         }
 
         info!(

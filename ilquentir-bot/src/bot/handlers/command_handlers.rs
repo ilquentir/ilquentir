@@ -88,7 +88,7 @@ pub async fn handle_start(
 
     bot.send_message(
         chat_id_wrapped,
-r#"Log your status daily, track your feelings and notice trends.
+        r#"Log your status daily, track your feelings and notice trends.
 Every week we will be sending you stats about personal and communal trends."#,
     )
     .await?;
