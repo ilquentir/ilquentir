@@ -4,7 +4,7 @@ use color_eyre::Result;
 use ilquentir_giphy::GiphyApi;
 use sqlx::PgPool;
 use teloxide::{
-    payloads::{SendMessage, SendMessageSetters, SendPhoto, SendAnimation},
+    payloads::{SendAnimation, SendMessage, SendMessageSetters, SendPhoto},
     requests::{JsonRequest, Requester},
     types::{InputFile, Update, UpdateKind},
     Bot,
@@ -18,7 +18,12 @@ use crate::{
 };
 
 #[tracing::instrument(skip(bot, pool, giphy), err)]
-pub async fn handle_poll_update(bot: Bot, pool: PgPool, giphy: GiphyApi, update: Update) -> Result<()> {
+pub async fn handle_poll_update(
+    bot: Bot,
+    pool: PgPool,
+    giphy: GiphyApi,
+    update: Update,
+) -> Result<()> {
     let user_id = update.user().map(|u| u.id.0);
     let chat_id = update.chat().map(|c| c.id.0);
 
@@ -70,18 +75,15 @@ Keep answering to see your personal dynamics per se and in comparison to the com
             let cat_gif = giphy.get_random_cat_gif().await?;
 
             info!(user_id, chat_id, "sending cat gif");
-            let photo_payload = SendAnimation::new(
-                chat_id.to_string(),
-                InputFile::url(cat_gif),
-            );
+            let photo_payload = SendAnimation::new(chat_id.to_string(), InputFile::url(cat_gif));
             JsonRequest::new(bot.clone(), photo_payload).await?;
 
             info!(user_id, chat_id, "sending message");
             bot.send_message(
                 chat_id.to_string(),
-                r#"Thanks! When we'll be ready with stats – you'll know!
-In case of having any questions – don't hesitate to write @utterstep :)"#
-            ).await?;
+                r#"Thanks! I'm getting __smarter every day__, soon I'll be back with some stat for you :)"#,
+            )
+            .await?;
         }
 
         info!(

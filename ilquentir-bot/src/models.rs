@@ -22,7 +22,10 @@ type PgTransaction<'t> = Transaction<'t, Postgres>;
 
 impl User {
     #[tracing::instrument(skip(transaction), err)]
-    pub async fn get_user_by_id<'t>(transaction: &mut PgTransaction<'t>, user_id: i64) -> Result<Option<Self>> {
+    pub async fn get_user_by_id<'t>(
+        transaction: &mut PgTransaction<'t>,
+        user_id: i64,
+    ) -> Result<Option<Self>> {
         Ok(sqlx::query_as!(
             User,
             r#"

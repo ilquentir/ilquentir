@@ -57,7 +57,11 @@ pub async fn handle_start(
     let chat_id_wrapped = ChatId(chat_id);
 
     if let Some(user) = User::get_user_by_id(&mut *txn, chat_id).await? {
-        info!(chat_id, user_id = user.tg_id, "user already exists and active :)");
+        info!(
+            chat_id,
+            user_id = user.tg_id,
+            "user already exists and active :)"
+        );
 
         bot.send_message(chat_id_wrapped, "Hello! Nice to see you again :)")
             .await?;
@@ -85,9 +89,7 @@ pub async fn handle_start(
     bot.send_message(
         chat_id_wrapped,
 r#"Log your status daily, track your feelings and notice trends.
-Every week we will be sending you stats about personal and communal trends.
-
-Your daily poll will be sent to you at 19:00 UTC. In your first poll, give an answer for the previous day :)"#,
+Every week we will be sending you stats about personal and communal trends."#,
     )
     .await?;
     JsonRequest::new(bot.clone(), payload.clone()).await?;

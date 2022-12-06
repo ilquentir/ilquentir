@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use color_eyre::Result;
-use giphy::v1::{r#async::{AsyncApi, RunnableAsyncRequest}, gifs::RandomRequest};
+use giphy::v1::{
+    gifs::RandomRequest,
+    r#async::{AsyncApi, RunnableAsyncRequest},
+};
 use reqwest::Client;
 
 /// Giphy API wrapper
@@ -29,7 +32,8 @@ impl GiphyApi {
     pub async fn get_random_cat_gif(&self) -> Result<url::Url> {
         const CAT_QUERY: &str = "cute cat";
 
-        Ok(RandomRequest::new().with_tag(CAT_QUERY)
+        Ok(RandomRequest::new()
+            .with_tag(CAT_QUERY)
             .send_to(&self.api)
             .await?
             .data
