@@ -84,7 +84,7 @@ Keep answering to see your personal dynamics per se and in comparison to the com
             info!(user_id, chat_id, "sending message");
             let message_text = match poll.kind {
                 PollKind::HowWasYourDay => r#"Thank you for your participation, it really means _a lot_\!
-Here is yesterday's stat for, how everyone rated their days:
+Here is yesterday's stat for you, see how everyone rated last day:
 
 ```
   %
