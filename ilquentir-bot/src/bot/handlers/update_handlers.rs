@@ -100,7 +100,7 @@ Here is yesterday's stat for you, see how everyone rated last day:
 ┄05┄┤┄┄┄┄┌───┤▓▓▓│▓▓▓├───┐
 ┄00┄┤┌───┤▓▓▓│▓▓▓│▓▓▓│▓▓▓│
 ┄┄┄┄┄┄-2┄┄┄┄┄┄┄0┄┄┄┄┄┄+2┄┄```"#,
-                PollKind::FoodAllergy => "Meow :)"
+                PollKind::FoodAllergy => r#"Meow :\)"#
             };
 
             let message_payload = SendMessage::new(
