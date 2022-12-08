@@ -14,7 +14,7 @@ use tracing::{info, warn};
 
 use crate::{
     bot::helpers::set_typing,
-    models::{Poll, PollAnswer, User},
+    models::{Poll, PollAnswer, User}, poll::PollKind,
 };
 
 #[tracing::instrument(skip(bot, pool, giphy), err)]
@@ -82,9 +82,30 @@ Keep answering to see your personal dynamics per se and in comparison to the com
             JsonRequest::new(bot.clone(), photo_payload).await?;
 
             info!(user_id, chat_id, "sending message");
+            let message_text = match poll.kind {
+                PollKind::HowWasYourDay => r#"Thank you for your participation, it really means _a lot_\!
+Here is yesterday's stat for, how everyone rated their days:
+
+```
+  %
+┄50┄┼┄┄┄┄┄┄┄┄┌───┐┄┄┄┄┄┄┄┄
+┄45┄┤┄┄┄┄┄┄┄┄│▓▓▓│┄┄┄┄┄┄┄┄
+┄40┄┤┄┄┄┄┄┄┄┄│▓▓▓├───┐┄┄┄┄
+┄35┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
+┄30┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
+┄25┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
+┄20┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
+┄15┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
+┄10┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
+┄05┄┤┄┄┄┄┌───┤▓▓▓│▓▓▓├───┐
+┄00┄┤┌───┤▓▓▓│▓▓▓│▓▓▓│▓▓▓│
+┄┄┄┄┄┄-2┄┄┄┄┄┄┄0┄┄┄┄┄┄+2┄┄```"#,
+                PollKind::FoodAllergy => "Meow :)"
+            };
+
             let message_payload = SendMessage::new(
                 chat_id.to_string(),
-                r#"Thanks\! I'm getting _smarter every day_, soon I'll be back with some stat for you :\)"#,
+                message_text,
             )
             .parse_mode(teloxide::types::ParseMode::MarkdownV2);
             JsonRequest::new(bot.clone(), message_payload).await?;
