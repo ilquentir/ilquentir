@@ -305,6 +305,30 @@
     },
     "query": "\nUPDATE polls\nSET\n    tg_id = $2,\n    chat_tg_id = $3,\n    kind = $4,\n    publication_date = $5,\n    published = $6\nWHERE id = $1\nRETURNING\n    id as \"id?\",\n    tg_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\n            "
   },
+  "d60fbc223d7d94521aeca70d231404519e57543a98a2a6896ccdbf0605167f63": {
+    "describe": {
+      "columns": [
+        {
+          "name": "tg_id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "active",
+          "ordinal": 1,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\nSELECT tg_id, active\nFROM users\nWHERE active\n            "
+  },
   "dae6e58fb74c36560936d2b11a8de0680c5c8af0b2e86d7a098321bee9d2efec": {
     "describe": {
       "columns": [
@@ -330,5 +354,31 @@
       }
     },
     "query": "\nINSERT INTO users (tg_id, active)\nVALUES ($1, false)\nON CONFLICT (tg_id) DO UPDATE SET active = false\nRETURNING tg_id, active\n            "
+  },
+  "fbe679e0cc5ad6ce2f40274e100823c41070ad124137400771f586b485a48839": {
+    "describe": {
+      "columns": [
+        {
+          "name": "selected_value",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "n_selected!",
+          "ordinal": 1,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        false,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    selected_value,\n    COUNT(poll_answers.id) as \"n_selected!\"\nFROM poll_answers\nJOIN polls\nON poll_answers.poll_tg_id = polls.tg_id\nWHERE\n    polls.kind = $1\n    AND polls.publication_date BETWEEN NOW() - interval '24 hours' AND NOW()\nGROUP BY selected_value\n            "
   }
 }

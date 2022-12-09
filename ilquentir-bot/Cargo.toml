@@ -26,6 +26,9 @@ rand = { workspace = true }
 
 ilquentir-giphy = { path = "../ilquentir-giphy" }
 
+regex = "1"
+rasciigraph = "0.1"
+
 [dependencies.teloxide]
 version = "0.11"
 default-features = false

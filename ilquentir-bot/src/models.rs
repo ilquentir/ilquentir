@@ -27,7 +27,7 @@ impl User {
         user_id: i64,
     ) -> Result<Option<Self>> {
         Ok(sqlx::query_as!(
-            User,
+            Self,
             r#"
 SELECT tg_id, active
 FROM users
@@ -44,7 +44,7 @@ WHERE
     #[tracing::instrument(skip(transaction), err)]
     pub async fn activate<'t>(transaction: &mut PgTransaction<'t>, user_id: i64) -> Result<Self> {
         Ok(sqlx::query_as!(
-            User,
+            Self,
             r#"
 INSERT INTO users (tg_id, active)
 VALUES ($1, true)
@@ -60,7 +60,7 @@ RETURNING tg_id, active
     #[tracing::instrument(skip(transaction), err)]
     pub async fn deactivate<'t>(transaction: &mut PgTransaction<'t>, user_id: i64) -> Result<Self> {
         Ok(sqlx::query_as!(
-            User,
+            Self,
             r#"
 INSERT INTO users (tg_id, active)
 VALUES ($1, false)
@@ -91,6 +91,20 @@ WHERE poll.chat_tg_id = $1
         .fetch_one(transaction)
         .await?
         .n_answered)
+    }
+
+    #[tracing::instrument(skip(transaction), err)]
+    pub async fn get_active<'t>(transaction: &mut PgTransaction<'t>) -> Result<Vec<Self>> {
+        Ok(sqlx::query_as!(
+            Self,
+            r#"
+SELECT tg_id, active
+FROM users
+WHERE active
+            "#
+        )
+        .fetch_all(transaction)
+        .await?)
     }
 
     #[tracing::instrument]
@@ -142,7 +156,7 @@ impl Poll {
     #[tracing::instrument(skip(transaction), err)]
     async fn insert<'t>(self, transaction: &mut PgTransaction<'t>) -> Result<Self> {
         Ok(sqlx::query_as!(
-            Poll,
+            Self,
             r#"
 INSERT INTO polls (
     chat_tg_id,
@@ -169,9 +183,9 @@ RETURNING
     }
 
     #[tracing::instrument(skip(transaction), err)]
-    pub async fn schedule_next<'t>(self, transaction: &mut PgTransaction<'t>) -> Result<Poll> {
+    pub async fn schedule_next<'t>(self, transaction: &mut PgTransaction<'t>) -> Result<Self> {
         let next_at = self.kind.schedule_next(self.publication_date);
-        let poll = Poll {
+        let poll = Self {
             publication_date: next_at,
             published: false,
             ..self
@@ -193,7 +207,7 @@ RETURNING
 
         Ok(Some(
             sqlx::query_as!(
-                Poll,
+                Self,
                 r#"
 UPDATE polls
 SET
@@ -251,7 +265,7 @@ WHERE
     #[tracing::instrument(skip(transaction), err)]
     pub async fn get_pending<'t>(transaction: &mut PgTransaction<'t>) -> Result<Vec<Self>> {
         Ok(sqlx::query_as!(
-            Poll,
+            Self,
             r#"
 SELECT
     id as "id?",
@@ -274,7 +288,7 @@ WHERE
         .await?)
     }
 
-    #[tracing::instrument(skip(bot), err)]
+    #[tracing::instrument(skip(bot, transaction), err)]
     pub async fn publish_to_tg<'t>(
         mut self,
         transaction: &mut PgTransaction<'t>,
@@ -340,6 +354,37 @@ WHERE
             "got some weird message in response to SendPoll request"
         ))
     }
+
+    #[tracing::instrument(skip(transaction), err)]
+    pub async fn get_poll_stats<'t>(
+        transaction: &mut PgTransaction<'t>,
+        kind: PollKind,
+    ) -> Result<Vec<PollStat>> {
+        Ok(sqlx::query_as!(
+            PollStat,
+            r#"
+SELECT
+    selected_value,
+    COUNT(poll_answers.id) as "n_selected!"
+FROM poll_answers
+JOIN polls
+ON poll_answers.poll_tg_id = polls.tg_id
+WHERE
+    polls.kind = $1
+    AND polls.publication_date BETWEEN NOW() - interval '24 hours' AND NOW()
+GROUP BY selected_value
+            "#,
+            kind.to_string()
+        )
+        .fetch_all(transaction)
+        .await?)
+    }
+}
+
+#[derive(Debug, Clone, FromRow)]
+pub struct PollStat {
+    pub selected_value: i32,
+    pub n_selected: i64,
 }
 
 #[derive(Debug, Clone, FromRow)]
@@ -363,7 +408,7 @@ impl PollAnswer {
 
         for choice in option_ids {
             sqlx::query_as!(
-                PollAnswer,
+                Self,
                 r#"
 INSERT INTO poll_answers (poll_tg_id, selected_value)
 VALUES ($1, $2)

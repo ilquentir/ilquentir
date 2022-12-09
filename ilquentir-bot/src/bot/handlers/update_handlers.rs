@@ -10,11 +10,12 @@ use teloxide::{
     Bot,
 };
 
-use tracing::{info, warn};
+use tracing::{info, warn, error};
 
 use crate::{
     bot::helpers::set_typing,
-    models::{Poll, PollAnswer, User}, poll::PollKind,
+    models::{PollAnswer, User, Poll},
+    poll::PollKind, scheduler::create_chart,
 };
 
 #[tracing::instrument(skip(bot, pool, giphy), err)]
@@ -75,7 +76,14 @@ Keep answering to see your personal dynamics per se and in comparison to the com
             JsonRequest::new(bot.clone(), message_payload).await?;
         } else {
             // send generic response
-            let cat_gif = giphy.get_random_cat_gif().await?;
+            let cat_gif = tokio::time::timeout(
+                Duration::from_secs(2),
+                giphy.get_random_cat_gif()
+            ).await.unwrap_or_else(|elapsed| {
+                error!(?elapsed, "timeout while requesting GIPHY api");
+
+                Ok("https://media0.giphy.com/media/X3Yj4XXXieKYM/giphy-loop.mp4?cid=fd4c87ca9b02f849d4548fc9530a2dbe6e058599dc2630af&rid=giphy-loop.mp4&ct=g".parse().unwrap())
+            })?;
 
             info!(user_id, chat_id, "sending cat gif");
             let photo_payload = SendAnimation::new(chat_id.to_string(), InputFile::url(cat_gif));
@@ -83,31 +91,35 @@ Keep answering to see your personal dynamics per se and in comparison to the com
 
             info!(user_id, chat_id, "sending message");
             let message_text = match poll.kind {
-                PollKind::HowWasYourDay => r#"Thank you for your participation, it really means _a lot_\!
-Here is yesterday's stat for you, see how everyone rated last day:
+                PollKind::HowWasYourDay => {
+                    let bot_clone = bot.clone();
+                    tokio::spawn(async move {
+                        let delay = poll.publication_date + Duration::from_secs(60 * 10) - time::OffsetDateTime::now_utc();
+                        if delay.is_positive() {
+                            tokio::time::sleep(delay.unsigned_abs()).await;
+                        }
+
+                        let stats = Poll::get_poll_stats(&mut pool.begin().await.unwrap(), poll.kind).await.unwrap();
+                        let graph = create_chart(&stats).unwrap();
+
+                        let message_payload = SendMessage::new(chat_id.to_string(), format!(r#"Here is *today's* stat for you:
 
 ```
   %
-┄50┄┼┄┄┄┄┄┄┄┄┌───┐┄┄┄┄┄┄┄┄
-┄45┄┤┄┄┄┄┄┄┄┄│▓▓▓│┄┄┄┄┄┄┄┄
-┄40┄┤┄┄┄┄┄┄┄┄│▓▓▓├───┐┄┄┄┄
-┄35┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
-┄30┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
-┄25┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
-┄20┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
-┄15┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
-┄10┄┤┄┄┄┄┄┄┄┄│▓▓▓│▓▓▓│┄┄┄┄
-┄05┄┤┄┄┄┄┌───┤▓▓▓│▓▓▓├───┐
-┄00┄┤┌───┤▓▓▓│▓▓▓│▓▓▓│▓▓▓│
-┄┄┄┄┄┄-2┄┄┄┄┄┄┄0┄┄┄┄┄┄+2┄┄```"#,
-                PollKind::FoodAllergy => r#"Meow :\)"#
+{graph}
+```"#
+                        )).parse_mode(teloxide::types::ParseMode::MarkdownV2);
+
+                        JsonRequest::new(bot_clone, message_payload).await.unwrap();
+                    });
+
+                    r#"Thank you, we're iterating on a daily basis :\)"#
+                },
+                PollKind::FoodAllergy => r#"Meow :\)"#,
             };
 
-            let message_payload = SendMessage::new(
-                chat_id.to_string(),
-                message_text,
-            )
-            .parse_mode(teloxide::types::ParseMode::MarkdownV2);
+            let message_payload = SendMessage::new(chat_id.to_string(), message_text)
+                .parse_mode(teloxide::types::ParseMode::MarkdownV2);
             JsonRequest::new(bot.clone(), message_payload).await?;
         }
 
@@ -119,38 +131,6 @@ Here is yesterday's stat for you, see how everyone rated last day:
         );
     } else {
         warn!(user_id, chat_id, update = ?update, "unexpected update type");
-    }
-
-    Ok(())
-}
-
-#[tracing::instrument(skip(bot, pool), err)]
-pub async fn handle_scheduled(bot: &Bot, pool: &PgPool) -> Result<()> {
-    let mut txn = pool.begin().await?;
-
-    info!("checking if there exist some unsent polls");
-    let polls = Poll::get_pending(&mut txn).await?;
-    if polls.is_empty() {
-        info!("no polls to send");
-    } else {
-        info!(unsent_poll_count = polls.len(), "found some unsent polls");
-    }
-
-    // FIXME: do not require transaction usage in Poll::get_pending
-    txn.commit().await?;
-
-    for poll in polls {
-        info!(
-            poll_id = poll.id,
-            user_id = poll.chat_tg_id,
-            "sending scheduled poll"
-        );
-
-        let mut txn = pool.begin().await?;
-
-        poll.publish_to_tg(&mut txn, bot).await?;
-
-        txn.commit().await?;
     }
 
     Ok(())

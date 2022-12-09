@@ -4,12 +4,16 @@ use std::{
 };
 
 use color_eyre::Result;
+use rasciigraph::{plot, Config};
 use sqlx::PgPool;
 use teloxide::{dispatching::ShutdownToken as DispatcherShutdownToken, Bot};
 use tokio::time::interval;
 use tracing::{error, info};
 
-use crate::bot::{handlers::handle_scheduled, Dispatcher};
+use crate::{
+    bot::Dispatcher,
+    models::{Poll, PollStat},
+};
 
 #[derive(Clone)]
 pub struct Scheduler {
@@ -71,3 +75,87 @@ impl Scheduler {
         self.running.load(std::sync::atomic::Ordering::Acquire)
     }
 }
+
+#[tracing::instrument(skip_all, err)]
+pub async fn handle_scheduled(bot: &Bot, pool: &PgPool) -> Result<()> {
+    let mut txn = pool.begin().await?;
+
+    info!("checking if there exist some unsent polls");
+    let polls = Poll::get_pending(&mut txn).await?;
+    if polls.is_empty() {
+        info!("no polls to send");
+    } else {
+        info!(unsent_poll_count = polls.len(), "found some unsent polls");
+    }
+
+    // FIXME: do not require transaction usage in Poll::get_pending
+    txn.commit().await?;
+
+    for poll in polls {
+        info!(
+            poll_id = poll.id,
+            user_id = poll.chat_tg_id,
+            "sending scheduled poll"
+        );
+
+        let mut txn = pool.begin().await?;
+
+        poll.publish_to_tg(&mut txn, bot).await?;
+
+        txn.commit().await?;
+    }
+
+    Ok(())
+}
+
+pub fn create_chart(poll_stats: &[PollStat]) -> Result<String> {
+    let minus_two = poll_stats
+        .iter()
+        .find_map(|stat| (stat.selected_value == 4).then_some(stat.n_selected))
+        .unwrap_or_default();
+
+    let minus_one = poll_stats
+        .iter()
+        .find_map(|stat| (stat.selected_value == 3).then_some(stat.n_selected))
+        .unwrap_or_default();
+
+    let zero = poll_stats
+        .iter()
+        .find_map(|stat| (stat.selected_value == 2).then_some(stat.n_selected))
+        .unwrap_or_default();
+
+    let plus_one = poll_stats
+        .iter()
+        .find_map(|stat| (stat.selected_value == 1).then_some(stat.n_selected))
+        .unwrap_or_default();
+
+    let plus_two = poll_stats
+        .iter()
+        .find_map(|stat| (stat.selected_value == 0).then_some(stat.n_selected))
+        .unwrap_or_default();
+
+    let total = (minus_two + minus_one + zero + plus_one + plus_two) as f64 * 100.;
+    let series = vec![
+        minus_two as f64 / total, minus_two as f64 / total, minus_two as f64 / total,
+        minus_one as f64 / total, minus_one as f64 / total, minus_one as f64 / total,
+        zero as f64 / total, zero as f64 / total, zero as f64 / total,
+        plus_one as f64 / total, plus_one as f64 / total, plus_one as f64 / total,
+        plus_two as f64 / total, plus_two as f64 / total, plus_two as f64 / total,
+        0.0
+    ];
+
+    let mut graph = plot(
+        series,
+        Config::default().with_offset(2).with_height(10).with_width(16)
+    );
+
+    let re_decimal = regex::Regex::new(r"\.\d{2}")?;
+    let re_one_digit = regex::Regex::new(r" (\d\D)")?;
+    graph = re_decimal.replace_all(&graph, "").to_string();
+    graph = re_one_digit.replace_all(dbg!(&graph), "0$1").to_string();
+    graph += "\n    -2     0    +2  ";
+    graph = graph.replace(' ', "┄");
+
+    Ok(graph)
+}
+
