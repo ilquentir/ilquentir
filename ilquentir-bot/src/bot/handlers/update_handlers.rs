@@ -129,7 +129,7 @@ Keep answering to see your personal dynamics per se and in comparison to the com
 
 Stay tuned, tomorrow we'll be back with our very first week's stats\!
 
-PS. Try /get_stat command while you're waiting ;\)"#
+PS\. Try `/get_stat` command while you're waiting ;\)"#
                 }
                 PollKind::FoodAllergy => r#"Meow :\)"#,
             };
