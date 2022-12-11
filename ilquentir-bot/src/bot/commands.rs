@@ -5,7 +5,7 @@ use teloxide::utils::command::BotCommands;
 pub enum Command {
     #[command(description = "Start your journey with Ilqentir.")]
     Start,
-    #[command(description = "Get my stat.")]
+    #[command(description = "Get today's stat.")]
     GetStat,
     #[command(description = "Disable Ilquentir reminders and periodic stats.")]
     Stop,

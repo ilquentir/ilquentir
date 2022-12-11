@@ -10,12 +10,13 @@ use teloxide::{
     Bot,
 };
 
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
 use crate::{
     bot::helpers::set_typing,
-    models::{PollAnswer, User, Poll},
-    poll::PollKind, scheduler::create_chart,
+    models::{Poll, PollAnswer, User},
+    poll::PollKind,
+    scheduler::create_chart,
 };
 
 #[tracing::instrument(skip(bot, pool, giphy), err)]
@@ -94,31 +95,42 @@ Keep answering to see your personal dynamics per se and in comparison to the com
                 PollKind::HowWasYourDay => {
                     let bot_clone = bot.clone();
                     tokio::spawn(async move {
-                        let delay = poll.publication_date + Duration::from_secs(1) - time::OffsetDateTime::now_utc();
+                        let delay = poll.publication_date + Duration::from_secs(60 * 10)
+                            - time::OffsetDateTime::now_utc();
                         if delay.is_positive() {
                             tokio::time::sleep(delay.unsigned_abs()).await;
                         } else {
                             tokio::time::sleep(Duration::from_secs(1)).await;
                         }
 
-                        let stats = Poll::get_poll_stats(&mut pool.begin().await.unwrap(), poll.kind).await.unwrap();
+                        let stats =
+                            Poll::get_poll_stats(&mut pool.begin().await.unwrap(), poll.kind)
+                                .await
+                                .unwrap();
                         let graph = create_chart(&stats).unwrap();
 
-                        let message_payload = SendMessage::new(chat_id.to_string(), format!(r#"Btw, here is Sunday's stat for you :\)
+                        let message_payload = SendMessage::new(
+                            chat_id.to_string(),
+                            format!(
+                                r#"Btw, here is Sunday's stat for you :\)
 
 ```
   %
 {graph}
 ```"#
-                        )).parse_mode(teloxide::types::ParseMode::MarkdownV2);
+                            ),
+                        )
+                        .parse_mode(teloxide::types::ParseMode::MarkdownV2);
 
                         JsonRequest::new(bot_clone, message_payload).await.unwrap();
                     });
 
                     r#"Thank you :\)
 
-Stay tuned, tomorrow we'll be back with our very first week's stats\!"#
-                },
+Stay tuned, tomorrow we'll be back with our very first week's stats\!
+
+PS. Try /get_stat command while you're waiting ;\)"#
+                }
                 PollKind::FoodAllergy => r#"Meow :\)"#,
             };
 

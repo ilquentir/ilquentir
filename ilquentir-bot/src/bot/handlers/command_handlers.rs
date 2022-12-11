@@ -3,7 +3,7 @@ use std::time::Duration;
 use color_eyre::Result;
 use sqlx::{PgPool, Postgres, Transaction};
 use teloxide::{
-    payloads::SendChatAction,
+    payloads::{SendChatAction, SendMessage, SendMessageSetters},
     requests::JsonRequest,
     requests::Requester,
     types::{ChatId, Message},
@@ -14,6 +14,8 @@ use tracing::info;
 use crate::{
     bot::{helpers::set_typing, Command},
     models::{Poll, User},
+    poll::PollKind,
+    scheduler::create_chart,
 };
 
 #[tracing::instrument(skip(bot, pool), err)]
@@ -38,8 +40,26 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
             .await?;
         }
         Command::GetStat => {
-            bot.send_message(msg.chat.id, "get_stat is currently unimplemented :(")
-                .await?;
+            let stats =
+                Poll::get_poll_stats(&mut pool.begin().await.unwrap(), PollKind::HowWasYourDay)
+                    .await
+                    .unwrap();
+            let graph = create_chart(&stats).unwrap();
+
+            let message_payload = SendMessage::new(
+                msg.chat.id,
+                format!(
+                    r#"Here is last day's stat:
+
+```
+%
+{graph}
+```"#
+                ),
+            )
+            .parse_mode(teloxide::types::ParseMode::MarkdownV2);
+
+            JsonRequest::new(bot, message_payload).await?;
         }
     }
     txn.commit().await?;
