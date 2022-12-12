@@ -11,8 +11,8 @@ use teloxide::{
 };
 use tracing::info;
 
-use ilquentir_graphs::daily::chart_daily_stats;
-use ilquentir_models::{Poll, PollKind, PollStat, User};
+use ilquentir_graphs::{daily::chart_daily_stats, weekly::personal_weekly_stat};
+use ilquentir_models::{Poll, PollKind, PollStat, User, PollWeeklyUserStat};
 
 use crate::bot::{helpers::set_typing, Command};
 
@@ -33,7 +33,7 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
 
             bot.send_message(
                 msg.chat.id,
-                "Deactivation succeeded. Hope you'll be back soon!",
+                "Деактивировали! Надеюсь, ещё увидимся :)",
             )
             .await?;
         }
@@ -43,15 +43,21 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
                     .await?;
             let graph = chart_daily_stats(&stats)?;
 
+            let your_stat = PollWeeklyUserStat::get_for_last_week(&mut pool.begin().await?, PollKind::HowWasYourDay, msg.chat.id.0).await?;
+            let your_stat_descr = personal_weekly_stat(&your_stat);
+
             let message_payload = SendMessage::new(
                 msg.chat.id,
                 format!(
-                    r#"Here is last day's stat:
+                    r#"Ага, вот статистика по всем пользователям за последний день:
 
 ```
 %
 {graph}
-```"#
+```
+
+И твоя за неделю:
+{your_stat_descr}"#
                 ),
             )
             .parse_mode(teloxide::types::ParseMode::MarkdownV2);
@@ -80,7 +86,7 @@ pub async fn handle_start(
             "user already exists and active :)"
         );
 
-        bot.send_message(chat_id_wrapped, "Hello! Nice to see you again :)")
+        bot.send_message(chat_id_wrapped, "И снова здравствуй :)")
             .await?;
 
         return Ok(());
@@ -96,7 +102,7 @@ pub async fn handle_start(
         user_id = user.tg_id,
         "sending welcome sequence to user"
     );
-    bot.send_message(chat_id_wrapped, "Hello! Ilquentir welcomes you.")
+    bot.send_message(chat_id_wrapped, "Ильквентир приветствует тебя! :)")
         .await?;
     let payload = SendChatAction::new(chat_id_wrapped, teloxide::types::ChatAction::Typing);
     JsonRequest::new(bot.clone(), payload.clone()).await?;
@@ -105,8 +111,9 @@ pub async fn handle_start(
 
     bot.send_message(
         chat_id_wrapped,
-        r#"Log your status daily, track your feelings and notice trends.
-Every week we will be sending you stats about personal and communal trends."#,
+        r#"Я помогу тебе трекать своё состояние ежедневно и замечать тренды.
+
+Раз в неделю я буду присылать подробную стату про тебя и прошедшую неделю."#,
     )
     .await?;
     JsonRequest::new(bot.clone(), payload.clone()).await?;
