@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use color_eyre::Result;
-use ilquentir_giphy::GiphyApi;
 use sqlx::PgPool;
 use teloxide::{
     payloads::{SendAnimation, SendMessage, SendMessageSetters, SendPhoto},
@@ -9,21 +8,21 @@ use teloxide::{
     types::{InputFile, Update, UpdateKind},
     Bot,
 };
-
 use tracing::{error, info, warn};
 
-use crate::{
-    bot::helpers::set_typing,
-    models::{Poll, PollAnswer, User},
-    poll::PollKind,
-    scheduler::create_chart,
-};
+use ilquentir_config::Config;
+use ilquentir_giphy::GiphyApi;
+use ilquentir_graphs::daily::chart_daily_stats;
+use ilquentir_models::{PollAnswer, PollKind, PollStat, User};
 
-#[tracing::instrument(skip(bot, pool, giphy), err)]
+use crate::bot::helpers::set_typing;
+
+#[tracing::instrument(skip(bot, pool, giphy, config), err)]
 pub async fn handle_poll_update(
     bot: Bot,
     pool: PgPool,
     giphy: GiphyApi,
+    config: Config,
     update: Update,
 ) -> Result<()> {
     let user_id = update.user().map(|u| u.id.0);
@@ -48,7 +47,7 @@ pub async fn handle_poll_update(
             "data saved, sending the reply"
         );
 
-        // let's finish the transaction before lots of communication with external APIs
+        // let's finish the txn before lots of communication with external APIs
         txn.commit().await?;
 
         let chat_id = poll.chat_tg_id;
@@ -95,7 +94,7 @@ Keep answering to see your personal dynamics per se and in comparison to the com
                 PollKind::HowWasYourDay => {
                     let bot_clone = bot.clone();
                     tokio::spawn(async move {
-                        let delay = poll.publication_date + Duration::from_secs(60 * 10)
+                        let delay = poll.publication_date + config.min_reply_delay
                             - time::OffsetDateTime::now_utc();
                         if delay.is_positive() {
                             tokio::time::sleep(delay.unsigned_abs()).await;
@@ -104,10 +103,10 @@ Keep answering to see your personal dynamics per se and in comparison to the com
                         }
 
                         let stats =
-                            Poll::get_poll_stats(&mut pool.begin().await.unwrap(), poll.kind)
+                            PollStat::get_today_stats(&mut pool.begin().await.unwrap(), poll.kind)
                                 .await
                                 .unwrap();
-                        let graph = create_chart(&stats).unwrap();
+                        let graph = chart_daily_stats(&stats).unwrap();
 
                         let message_payload = SendMessage::new(
                             chat_id.to_string(),

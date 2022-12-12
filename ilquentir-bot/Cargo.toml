@@ -7,9 +7,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dotenvy = { workspace = true }
+ilquentir-config = { path = "../ilquentir-config" }
+ilquentir-giphy = { path = "../ilquentir-giphy" }
+ilquentir-graphs = { path = "../ilquentir-graphs" }
+ilquentir-models = { path = "../ilquentir-models" }
+
 color-eyre = { workspace = true }
+dotenvy = { workspace = true }
 tokio = { workspace = true }
+serde = { workspace = true }
 
 tonic = { version = "0.8", features = ["tls", "tls-roots"] }
 tracing = { workspace = true }
@@ -21,25 +27,8 @@ opentelemetry-otlp = { version = "0.11", features = ["tls"] }
 webpki-roots = "0.22"
 
 dptree = "0.3"
-time = { version = "0.3", features = ["macros"] }
+teloxide = { workspace = true }
+
 rand = { workspace = true }
-
-ilquentir-giphy = { path = "../ilquentir-giphy" }
-
-regex = "1"
-rasciigraph = "0.1"
-
-[dependencies.teloxide]
-version = "0.11"
-default-features = false
-features = [
-    "rustls",
-    "ctrlc_handler",
-    "throttle",
-    "trace-adaptor",
-    "macros",
-]
-
-[dependencies.sqlx]
-version = "0.6"
-features = ["runtime-tokio-rustls", "postgres", "offline", "time"]
+time = { workspace = true }
+sqlx = { workspace = true }

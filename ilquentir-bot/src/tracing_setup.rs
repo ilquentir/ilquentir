@@ -1,5 +1,3 @@
-use std::env;
-
 use color_eyre::Result;
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
@@ -12,19 +10,21 @@ use opentelemetry::{
 use opentelemetry_otlp::WithExportConfig;
 use tonic::{metadata::*, transport::ClientTlsConfig};
 
-pub fn setup() -> Result<()> {
+use ilquentir_config::Config;
+
+pub fn setup(config: &Config) -> Result<()> {
     let mut map = MetadataMap::with_capacity(2);
-    let environment = env::var("ENVIRONMENT")?;
+    let environment = &config.environment;
 
     map.insert("x-environment", environment.parse()?);
-    map.insert("x-honeycomb-team", env::var("HONEYCOMB_KEY")?.parse()?);
+    map.insert("x-honeycomb-team", config.honeycomb_key.parse()?);
 
     let tracer = opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(
             opentelemetry_otlp::new_exporter()
                 .tonic()
-                .with_endpoint(env::var("EXPORTER_URL")?)
+                .with_endpoint(&config.exporter_url)
                 .with_tls_config(ClientTlsConfig::new())
                 .with_metadata(map),
         )

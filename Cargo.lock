@@ -496,6 +496,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "envy"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f47e0157f2cb54f5ae1bd371b30a2ae4311e1c028f575cd4e81de7353215965"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "erasable"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -835,6 +844,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4a1e36c821dbe04574f602848a19f742f4fb3c98d40449f11bcad18d6b17421"
 
 [[package]]
+name = "humantime"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
+
+[[package]]
+name = "humantime-serde"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57a3db5ea5923d99402c94e9feb261dc5ee9b4efa158b0315f788cf549cc200c"
+dependencies = [
+ "humantime",
+ "serde",
+]
+
+[[package]]
 name = "hyper"
 version = "0.14.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -914,17 +939,19 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-bot"
-version = "0.3.3"
+version = "0.4.0"
 dependencies = [
  "color-eyre",
  "dotenvy",
  "dptree",
+ "ilquentir-config",
  "ilquentir-giphy",
+ "ilquentir-graphs",
+ "ilquentir-models",
  "opentelemetry",
  "opentelemetry-otlp",
  "rand",
- "rasciigraph",
- "regex",
+ "serde",
  "sqlx",
  "teloxide",
  "time",
@@ -938,8 +965,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ilquentir-config"
+version = "0.4.0"
+dependencies = [
+ "color-eyre",
+ "envy",
+ "humantime-serde",
+ "serde",
+]
+
+[[package]]
 name = "ilquentir-giphy"
-version = "0.3.3"
+version = "0.4.0"
 dependencies = [
  "color-eyre",
  "dotenvy",
@@ -947,6 +984,29 @@ dependencies = [
  "reqwest",
  "tracing",
  "url",
+]
+
+[[package]]
+name = "ilquentir-graphs"
+version = "0.4.0"
+dependencies = [
+ "color-eyre",
+ "ilquentir-models",
+ "indoc",
+ "rasciigraph",
+ "regex",
+]
+
+[[package]]
+name = "ilquentir-models"
+version = "0.4.0"
+dependencies = [
+ "color-eyre",
+ "indoc",
+ "sqlx",
+ "teloxide",
+ "time",
+ "tracing",
 ]
 
 [[package]]
@@ -964,6 +1024,12 @@ dependencies = [
  "autocfg",
  "hashbrown",
 ]
+
+[[package]]
+name = "indoc"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adab1eaa3408fb7f0c777a73e7465fd5656136fc93b670eb6df3c88c2c1344e3"
 
 [[package]]
 name = "instant"
@@ -2598,9 +2664,9 @@ checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 
 [[package]]
 name = "typenum"
-version = "1.15.0"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
+checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
 
 [[package]]
 name = "unicase"

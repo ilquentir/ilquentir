@@ -1,5 +1,5 @@
 [package]
-name = "ilquentir-models"
+name = "ilquentir-config"
 version = { workspace = true }
 authors = { workspace = true }
 edition = "2021"
@@ -8,8 +8,6 @@ edition = "2021"
 
 [dependencies]
 color-eyre = { workspace = true }
-indoc = { workspace = true }
-sqlx = { workspace = true }
-teloxide = { workspace = true }
-time = { workspace = true }
-tracing = { workspace = true }
+envy = { workspace = true }
+serde = { workspace = true }
+humantime-serde = "1.1"

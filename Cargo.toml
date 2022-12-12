@@ -2,18 +2,39 @@
 members = [
     'ilquentir-bot',
     'ilquentir-giphy',
+    'ilquentir-config',
+    'ilquentir-models',
 ]
 
 [workspace.package]
-version = "0.3.3"
+version = "0.4.0"
 authors = ["utterstep"]
 
 [workspace.dependencies]
 dotenvy = "0.15"
+envy = "0.4"
 color-eyre = "0.6"
+indoc = "1"
 tracing = "0.1"
 tracing-tree = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "parking_lot"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "parking_lot"] }
 rand = "0.8"
+serde = { version = "1", features = ["derive"] }
+time = { version = "0.3", features = ["macros"] }
 url = "2"
+
+[workspace.dependencies.sqlx]
+version = "0.6"
+features = ["runtime-tokio-rustls", "postgres", "offline", "time"]
+
+[workspace.dependencies.teloxide]
+version = "0.11"
+default-features = false
+features = [
+    "rustls",
+    "ctrlc_handler",
+    "throttle",
+    "trace-adaptor",
+    "macros",
+]

@@ -2,7 +2,7 @@
 .env
 
 # Rust build artifacts
-target
+# target
 
 # data export
 db_export

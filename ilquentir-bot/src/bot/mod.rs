@@ -1,5 +1,4 @@
 use color_eyre::{eyre::Result, Report};
-use ilquentir_giphy::GiphyApi;
 use sqlx::PgPool;
 use teloxide::{
     dispatching::{DefaultKey, HandlerExt, UpdateFilterExt},
@@ -9,6 +8,9 @@ use teloxide::{
     utils::command::BotCommands,
     Bot,
 };
+
+use ilquentir_config::Config;
+use ilquentir_giphy::GiphyApi;
 
 pub mod commands;
 pub mod handlers;
@@ -21,7 +23,11 @@ use self::{
 
 pub type Dispatcher = TgDispatcher<Bot, Report, DefaultKey>;
 
-pub async fn create_bot_dispatcher(pool: PgPool, giphy: GiphyApi) -> Result<(Dispatcher, Bot)> {
+pub async fn create_bot_and_dispatcher(
+    pool: PgPool,
+    giphy: GiphyApi,
+    config: &Config,
+) -> Result<(Dispatcher, Bot)> {
     let bot = Bot::from_env();
     bot.set_my_commands(commands::Command::bot_commands())
         .await?;
@@ -42,7 +48,7 @@ pub async fn create_bot_dispatcher(pool: PgPool, giphy: GiphyApi) -> Result<(Dis
 
     Ok((
         Dispatcher::builder(bot.clone(), handler)
-            .dependencies(dptree::deps![pool, giphy])
+            .dependencies(dptree::deps![pool, giphy, config.clone()])
             .enable_ctrlc_handler()
             .build(),
         bot,

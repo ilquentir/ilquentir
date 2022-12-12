@@ -11,12 +11,10 @@ use teloxide::{
 };
 use tracing::info;
 
-use crate::{
-    bot::{helpers::set_typing, Command},
-    models::{Poll, User},
-    poll::PollKind,
-    scheduler::create_chart,
-};
+use ilquentir_graphs::daily::chart_daily_stats;
+use ilquentir_models::{Poll, PollKind, PollStat, User};
+
+use crate::bot::{helpers::set_typing, Command};
 
 #[tracing::instrument(skip(bot, pool), err)]
 pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Command) -> Result<()> {
@@ -41,10 +39,9 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
         }
         Command::GetStat => {
             let stats =
-                Poll::get_poll_stats(&mut pool.begin().await.unwrap(), PollKind::HowWasYourDay)
-                    .await
-                    .unwrap();
-            let graph = create_chart(&stats).unwrap();
+                PollStat::get_today_stats(&mut pool.begin().await?, PollKind::HowWasYourDay)
+                    .await?;
+            let graph = chart_daily_stats(&stats)?;
 
             let message_payload = SendMessage::new(
                 msg.chat.id,
