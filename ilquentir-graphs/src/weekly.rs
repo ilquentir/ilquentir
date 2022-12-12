@@ -7,13 +7,13 @@ pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
 
     let mut worst_days: Vec<_> = stats
         .iter()
-        .filter_map(|stat| (stat.selected_value == 5).then_some(stat.date.to_string()))
+        .filter_map(|stat| (stat.selected_value == 4).then_some(stat.date.to_string()))
         .collect();
     if worst_days.is_empty() {
         worst_days.extend(
             stats
                 .iter()
-                .filter_map(|stat| (stat.selected_value == 4).then_some(stat.date.to_string())),
+                .filter_map(|stat| (stat.selected_value == 3).then_some(stat.date.to_string())),
         );
     }
 
@@ -53,7 +53,7 @@ pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
         result.push_str(&format!("{}: {:+}\n", stat.date, 2 - stat.selected_value));
     }
 
-    result.push_str("```\n\n");
+    result.push_str("```\n");
     result.push_str(&format!("{worst_str}\n{best_str}"));
 
     result
