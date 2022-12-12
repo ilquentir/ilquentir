@@ -1,38 +1,5 @@
 {
   "db": "PostgreSQL",
-  "0641914d3385e38a1c0742fcd34402e46eeac111471dfeb4cce7e9215ae2fa03": {
-    "describe": {
-      "columns": [
-        {
-          "name": "kind: PollKind",
-          "ordinal": 0,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "date!",
-          "ordinal": 1,
-          "type_info": "Date"
-        },
-        {
-          "name": "selected_value",
-          "ordinal": 2,
-          "type_info": "Int4"
-        }
-      ],
-      "nullable": [
-        false,
-        null,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Int8"
-        ]
-      }
-    },
-    "query": "\nSELECT\n    polls.kind as \"kind: PollKind\",\n    DATE(polls.publication_date) as \"date!\",\n    poll_answers.selected_value\nFROM poll_answers\nJOIN polls\nON poll_answers.poll_tg_id = polls.tg_id\nWHERE\n    polls.kind = $1\n    AND polls.chat_tg_id = $2\n    AND polls.publication_date BETWEEN NOW() - interval '7 days' AND NOW() - interval '1 minute'\nORDER BY \"date!\"\n            "
-  },
   "0aa46b7f04ee1dba3c9c2eeb22661003c4d4caa72fc711bf672ad503c2f01c50": {
     "describe": {
       "columns": [
@@ -425,5 +392,38 @@
       }
     },
     "query": "\nINSERT INTO users (tg_id, active)\nVALUES ($1, false)\nON CONFLICT (tg_id) DO UPDATE SET active = false\nRETURNING tg_id, active\n            "
+  },
+  "e2819c3f53c6cd86c649306e1cd9176876c6dc42c0b94543a8e955a9ea5de747": {
+    "describe": {
+      "columns": [
+        {
+          "name": "kind: PollKind",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "date!",
+          "ordinal": 1,
+          "type_info": "Date"
+        },
+        {
+          "name": "selected_value",
+          "ordinal": 2,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        null,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    polls.kind as \"kind: PollKind\",\n    DATE(polls.publication_date) as \"date!\",\n    poll_answers.selected_value\nFROM poll_answers\nJOIN polls\nON poll_answers.poll_tg_id = polls.tg_id\nWHERE\n    polls.kind = $1\n    AND polls.chat_tg_id = $2\n    AND polls.publication_date BETWEEN NOW() - interval '8 days' AND NOW() - interval '1 minute'\nORDER BY \"date!\"\n            "
   }
 }

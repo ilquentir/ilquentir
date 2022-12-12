@@ -31,7 +31,7 @@ ON poll_answers.poll_tg_id = polls.tg_id
 WHERE
     polls.kind = $1
     AND polls.chat_tg_id = $2
-    AND polls.publication_date BETWEEN NOW() - interval '7 days' AND NOW() - interval '1 minute'
+    AND polls.publication_date BETWEEN NOW() - interval '8 days' AND NOW() - interval '1 minute'
 ORDER BY "date!"
             "#,
             kind.to_string(),

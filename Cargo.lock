@@ -939,7 +939,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-bot"
-version = "0.4.5"
+version = "0.4.6"
 dependencies = [
  "color-eyre",
  "dotenvy",
@@ -966,7 +966,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-config"
-version = "0.4.5"
+version = "0.4.6"
 dependencies = [
  "color-eyre",
  "envy",
@@ -976,7 +976,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-giphy"
-version = "0.4.5"
+version = "0.4.6"
 dependencies = [
  "color-eyre",
  "dotenvy",
@@ -988,7 +988,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-graphs"
-version = "0.4.5"
+version = "0.4.6"
 dependencies = [
  "color-eyre",
  "ilquentir-models",
@@ -1000,7 +1000,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-models"
-version = "0.4.5"
+version = "0.4.6"
 dependencies = [
  "color-eyre",
  "indoc",
