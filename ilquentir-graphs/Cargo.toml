@@ -11,6 +11,7 @@ ilquentir-models = { path = "../ilquentir-models" }
 
 color-eyre = { workspace = true }
 indoc = { workspace = true }
+time = { workspace = true }
 
 regex = "1"
 rasciigraph = "0.1"

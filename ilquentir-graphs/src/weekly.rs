@@ -1,4 +1,19 @@
 use ilquentir_models::PollWeeklyUserStat;
+use time::{Date, Weekday};
+
+pub fn display_date(date: Date) -> String {
+    let weekday = match date.weekday() {
+        Weekday::Monday => "пн",
+        Weekday::Tuesday => "вт",
+        Weekday::Wednesday => "ср",
+        Weekday::Thursday => "чт",
+        Weekday::Friday => "пт",
+        Weekday::Saturday => "сб",
+        Weekday::Sunday => "вс",
+    };
+
+    format!("{weekday}, {date}")
+}
 
 pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
     if stats.is_empty() {
@@ -7,32 +22,32 @@ pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
 
     let mut worst_days: Vec<_> = stats
         .iter()
-        .filter_map(|stat| (stat.selected_value == 4).then_some(stat.date.to_string()))
+        .filter_map(|stat| (stat.selected_value == 4).then(|| display_date(stat.date)))
         .collect();
     if worst_days.is_empty() {
         worst_days.extend(
             stats
                 .iter()
-                .filter_map(|stat| (stat.selected_value == 3).then_some(stat.date.to_string())),
+                .filter_map(|stat| (stat.selected_value == 3).then(|| display_date(stat.date))),
         );
     }
 
     let worst_str = if worst_days.is_empty() {
         r"Класс, плохих дней за последнюю неделю не было\!".to_owned()
     } else {
-        format!("Самые грустные дни за неделю: {}", worst_days.join(", "))
+        format!(r"Самые грустные дни за неделю: {}\.", worst_days.join(", "))
     }
     .replace('-', "\\-");
 
     let mut best_days: Vec<_> = stats
         .iter()
-        .filter_map(|stat| (stat.selected_value == 0).then_some(stat.date.to_string()))
+        .filter_map(|stat| (stat.selected_value == 0).then(|| display_date(stat.date)))
         .collect();
     if best_days.is_empty() {
         best_days.extend(
             stats
                 .iter()
-                .filter_map(|stat| (stat.selected_value == 1).then_some(stat.date.to_string())),
+                .filter_map(|stat| (stat.selected_value == 1).then(|| display_date(stat.date))),
         );
     }
 
@@ -40,8 +55,8 @@ pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
         r"На этой неделе было не очень весело, надеюсь, следующая пройдёт лучше\!".to_owned()
     } else {
         format!(
-            r"А вот и лучшие дни последней недели: {}
-Не забывай, бывает же классно\!",
+            r"А вот и лучшие дни последней недели: {}\.
+Не забывай, что бывает классно\!",
             best_days.join(", ")
         )
     }
@@ -50,11 +65,17 @@ pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
     let mut result = "```\n".to_owned();
 
     for stat in stats {
-        result.push_str(&format!("{}: {:+}\n", stat.date, 2 - stat.selected_value));
+        result.push_str(&format!(
+            "{date}: {rate:+}{beer}\n",
+            date = display_date(stat.date),
+            rate = 2 - stat.selected_value,
+            beer = if let Weekday::Friday = stat.date.weekday() { " 🍻" } else { "" }
+        ));
     }
 
     result.push_str("```\n");
-    result.push_str(&format!("{worst_str}\n{best_str}"));
+    result.push_str(&format!("{worst_str}\n\n{best_str}"));
 
+    println!("{}", result);
     result
 }
