@@ -104,10 +104,12 @@ pub async fn handle_poll_update(
                             tokio::time::sleep(Duration::from_secs(1)).await;
                         }
 
-                        let stats =
-                            PollStat::get_today_stats(&mut pool_clone.begin().await.unwrap(), poll.kind)
-                                .await
-                                .unwrap();
+                        let stats = PollStat::get_today_stats(
+                            &mut pool_clone.begin().await.unwrap(),
+                            poll.kind,
+                        )
+                        .await
+                        .unwrap();
                         let graph = chart_daily_stats(&stats).unwrap();
 
                         let message_payload = SendMessage::new(
@@ -126,14 +128,20 @@ pub async fn handle_poll_update(
                         JsonRequest::new(bot_clone, message_payload).await.unwrap();
                     });
 
-                    let your_stat = PollWeeklyUserStat::get_for_last_week(&mut pool.begin().await?, poll.kind, poll.chat_tg_id).await?;
+                    let your_stat = PollWeeklyUserStat::get_for_last_week(
+                        &mut pool.begin().await?,
+                        poll.kind,
+                        poll.chat_tg_id,
+                    )
+                    .await?;
                     let your_stat_descr = personal_weekly_stat(&your_stat);
 
-                    format!(r#"Привет, поймали ответ\! Послушали вас и решили, что раз бота делаем в около российском контексте – не выпендриваться и перейти на русский\. А дальше будем развивать\.
+                    format!(
+                        r#"Привет, поймали ответ\! Послушали вас и решили, что раз бота делаем в около российском контексте – не выпендриваться и перейти на русский\. А дальше будем развивать\.
 
 Прошла первая тестовая неделя, спасибо, что поверили и помогаете ^^
 
-Делимся [общим](https://utterstep-public.fra1.digitaloceanspaces.com/first_week.png) графиком оценок настроения и графиком ваших собственных ответов в течение недели\. На общем заметно, что во вторник у многих был эмоциональный подъем, а четверг похоже – трудный день\. Но пятница – спасение\! \(Напомним, что нас пока немного и прожили мы только неделю, так что не делайте слишком серьёзных выводов из общей статы :\)\)\.
+Делимся [общим](https://utterstep-public.fra1.digitaloceanspaces.com/first_week.png) графиком оценок настроения и твоими ответов в течение недели\. На общем заметно, что во вторник у многих был эмоциональный подъем, а четверг похоже – трудный день\. Но пятница – спасение\! \(Напомним, что нас пока немного и прожили мы только неделю, так что не стоит делать слишком серьёзных выводов из общей статы :\)\)\.
 
 Стата по тебе:
 {your_stat_descr}
@@ -141,16 +149,19 @@ pub async fn handle_poll_update(
 Свежую, актуальную стату теперь можно запросить у бота командой `/get_stat` \:\)
 Графики докуртим и подружим, будет по красоте\.\)
 
-Вы нам сильно поможете, если ответите на несколько вопросов про свой опыт с ботом\. Займет минут 5\. [Опрос](https://forms.gle/vDrswFF49tNqiYeH6)\.
-
-Хорошей недели и берегите себя\!"#)
+Хорошей недели и берегите себя\!"#
+                    )
                 }
                 PollKind::FoodAllergy => r#"Meow :\)"#.to_owned(),
             };
 
-            println!("{message_text}");
-
             let message_payload = SendMessage::new(chat_id.to_string(), message_text)
+                .parse_mode(teloxide::types::ParseMode::MarkdownV2);
+            JsonRequest::new(bot.clone(), message_payload).await?;
+
+            set_typing(&bot, chat_id, Some(Duration::from_millis(500))).await?;
+
+            let message_payload = SendMessage::new(chat_id.to_string(), r"Кстати, ты нам сильно поможешь, если ответишь на несколько вопросов про свой опыт с ботом\. Займет минут 5\. Вот [опрос](https://forms.gle/vDrswFF49tNqiYeH6), будем рады \:\)")
                 .parse_mode(teloxide::types::ParseMode::MarkdownV2);
             JsonRequest::new(bot.clone(), message_payload).await?;
         }

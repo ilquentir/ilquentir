@@ -12,7 +12,7 @@ use teloxide::{
 use tracing::info;
 
 use ilquentir_graphs::{daily::chart_daily_stats, weekly::personal_weekly_stat};
-use ilquentir_models::{Poll, PollKind, PollStat, User, PollWeeklyUserStat};
+use ilquentir_models::{Poll, PollKind, PollStat, PollWeeklyUserStat, User};
 
 use crate::bot::{helpers::set_typing, Command};
 
@@ -31,11 +31,8 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
 
             info!(chat_id = %msg.chat.id, user_id = user.tg_id, "disabled user");
 
-            bot.send_message(
-                msg.chat.id,
-                "Деактивировали! Надеюсь, ещё увидимся :)",
-            )
-            .await?;
+            bot.send_message(msg.chat.id, "Деактивировали! Надеюсь, ещё увидимся :)")
+                .await?;
         }
         Command::GetStat => {
             let stats =
@@ -43,7 +40,12 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
                     .await?;
             let graph = chart_daily_stats(&stats)?;
 
-            let your_stat = PollWeeklyUserStat::get_for_last_week(&mut pool.begin().await?, PollKind::HowWasYourDay, msg.chat.id.0).await?;
+            let your_stat = PollWeeklyUserStat::get_for_last_week(
+                &mut pool.begin().await?,
+                PollKind::HowWasYourDay,
+                msg.chat.id.0,
+            )
+            .await?;
             let your_stat_descr = personal_weekly_stat(&your_stat);
 
             let message_payload = SendMessage::new(

@@ -64,7 +64,7 @@ impl PollKind {
 
     pub fn question(self) -> String {
         match self {
-            Self::HowWasYourDay => "How was your day?",
+            Self::HowWasYourDay => "Как прошёл твой день?",
             Self::FoodAllergy => {
                 "Had you encountered any of described feelings after the meal today?"
             }
@@ -81,7 +81,7 @@ impl PollKind {
 
     pub fn options(self) -> Vec<String> {
         match self {
-            Self::HowWasYourDay => &["+2 (perfect)", "+1", "0", "-1", "-2 (terrible)"][..],
+            Self::HowWasYourDay => &["+2 (супер!)", "+1", "0 (никак)", "-1", "-2 (отвратительно)"][..],
             Self::FoodAllergy => &[
                 "Shortness of breath",
                 "Itching",
