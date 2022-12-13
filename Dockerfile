@@ -7,5 +7,9 @@ RUN cargo +nightly-2022-11-17 build -p ilquentir-bot --release -Z sparse-registr
 
 FROM debian:buster-slim
 COPY --from=builder ./target/release/ilquentir-bot /ilquentir-bot
-RUN apt-get update && apt-get install --assume-yes ca-certificates && update-ca-certificates
+RUN apt-get update \
+    && apt-get install --assume-yes ca-certificates \
+    && update-ca-certificates \
+    && apt-cache clean
+
 CMD ["/ilquentir-bot"]

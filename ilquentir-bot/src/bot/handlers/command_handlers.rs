@@ -51,7 +51,7 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
             let message_payload = SendMessage::new(
                 msg.chat.id,
                 format!(
-                    r#"Ага, вот статистика по всем пользователям за последний день:
+                    r#"Держи, вот статистика по всем пользователям за последний день:
 
 ```
 %
@@ -59,7 +59,12 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
 ```
 
 И твоя за неделю:
-{your_stat_descr}"#
+{your_stat_descr}
+
+Ещё есть [общий график](https://utterstep-public.fra1.digitaloceanspaces.com/first_week.png) за прошлую неделю\.
+
+Надеюсь, тебе с нами интересно\! Напомню, что ты нам очень поможешь, заполнив [небольшой опрос](https://forms.gle/vDrswFF49tNqiYeH6) на 5 минут :\)
+"#
                 ),
             )
             .parse_mode(teloxide::types::ParseMode::MarkdownV2);

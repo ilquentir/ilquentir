@@ -12,8 +12,8 @@ use tracing::{error, info, warn};
 
 use ilquentir_config::Config;
 use ilquentir_giphy::GiphyApi;
-use ilquentir_graphs::{daily::chart_daily_stats, weekly::personal_weekly_stat};
-use ilquentir_models::{PollAnswer, PollKind, PollStat, PollWeeklyUserStat, User};
+use ilquentir_graphs::{daily::chart_daily_stats};
+use ilquentir_models::{PollAnswer, PollKind, PollStat, User};
 
 use crate::bot::helpers::set_typing;
 
@@ -115,7 +115,7 @@ pub async fn handle_poll_update(
                         let message_payload = SendMessage::new(
                             chat_id.to_string(),
                             format!(
-                                r#"И – статистика за сегодня :\)
+                                r#"Присылаю статистику по ответам всех за сегодня :
 
 ```
   %
@@ -128,40 +128,14 @@ pub async fn handle_poll_update(
                         JsonRequest::new(bot_clone, message_payload).await.unwrap();
                     });
 
-                    let your_stat = PollWeeklyUserStat::get_for_last_week(
-                        &mut pool.begin().await?,
-                        poll.kind,
-                        poll.chat_tg_id,
-                    )
-                    .await?;
-                    let your_stat_descr = personal_weekly_stat(&your_stat);
+                    r#"Поймали ответ\!
 
-                    format!(
-                        r#"Привет, поймали ответ\! Послушали вас и решили, что раз бота делаем в около российском контексте – не выпендриваться и перейти на русский\. А дальше будем развивать\.
-
-Прошла первая тестовая неделя, спасибо, что поверили и помогаете ^^
-
-Делимся [общим](https://utterstep-public.fra1.digitaloceanspaces.com/first_week.png) графиком оценок настроения и твоими ответов в течение недели\. На общем заметно, что во вторник у многих был эмоциональный подъем, а четверг похоже – трудный день\. Но пятница – спасение\! \(Напомним, что нас пока немного и прожили мы только неделю, так что не стоит делать слишком серьёзных выводов из общей статы :\)\)\.
-
-Стата по тебе:
-{your_stat_descr}
-
-Свежую, актуальную стату теперь можно запросить у бота командой `/get_stat` \:\)
-Графики докрутим и подружим, будет по красоте\.\)
-
-Хорошей недели и берегите себя\!"#
-                    )
+Уже скоро тебе придёт статистика за сегодня, а пока напомню, что доступную стату можно посмотреть по запросу `/get_stat`\ :\)"#
                 }
-                PollKind::FoodAllergy => r#"Meow :\)"#.to_owned(),
+                PollKind::FoodAllergy => r#"Мур :\)"#,
             };
 
             let message_payload = SendMessage::new(chat_id.to_string(), message_text)
-                .parse_mode(teloxide::types::ParseMode::MarkdownV2);
-            JsonRequest::new(bot.clone(), message_payload).await?;
-
-            set_typing(&bot, chat_id, Some(Duration::from_millis(500))).await?;
-
-            let message_payload = SendMessage::new(chat_id.to_string(), r"Кстати, ты нам сильно поможешь, если ответишь на несколько вопросов про свой опыт с ботом\. Займет минут 5\. Вот [опрос](https://forms.gle/vDrswFF49tNqiYeH6), будем рады \:\)")
                 .parse_mode(teloxide::types::ParseMode::MarkdownV2);
             JsonRequest::new(bot.clone(), message_payload).await?;
         }
