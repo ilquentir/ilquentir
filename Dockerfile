@@ -9,7 +9,6 @@ FROM debian:buster-slim
 COPY --from=builder ./target/release/ilquentir-bot /ilquentir-bot
 RUN apt-get update \
     && apt-get install --assume-yes ca-certificates \
-    && update-ca-certificates \
-    && apt-cache clean
+    && update-ca-certificates
 
 CMD ["/ilquentir-bot"]
