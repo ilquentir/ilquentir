@@ -17,7 +17,7 @@ pub fn display_date(date: Date) -> String {
 
 pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
     if stats.is_empty() {
-        return "На этой неделе от тебя не было вестей :(".to_owned();
+        return r"На этой неделе от тебя не было вестей :\(".to_owned();
     }
 
     let mut worst_days: Vec<_> = stats
@@ -37,7 +37,7 @@ pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
     } else {
         format!(r"Самые грустные дни за неделю: {}\.", worst_days.join(", "))
     }
-    .replace('-', "\\-");
+    .replace('-', r"\-");
 
     let mut best_days: Vec<_> = stats
         .iter()
@@ -60,7 +60,7 @@ pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
             best_days.join(", ")
         )
     }
-    .replace('-', "\\-");
+    .replace('-', r"\-");
 
     let mut result = "```\n".to_owned();
 
@@ -76,6 +76,5 @@ pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
     result.push_str("```\n");
     result.push_str(&format!("{worst_str}\n\n{best_str}"));
 
-    println!("{}", result);
     result
 }
