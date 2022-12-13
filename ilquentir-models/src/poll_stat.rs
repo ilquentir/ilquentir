@@ -17,12 +17,13 @@ impl PollStat {
         txn: &mut PgTransaction<'t>,
         kind: PollKind,
     ) -> Result<Vec<PollStat>> {
+        // TODO: get interval from poll kind
         Ok(sqlx::query_as!(
             Self,
             r#"
 SELECT
     polls.kind as "kind: PollKind",
-    DATE(polls.publication_date) as "date!",
+    DATE(polls.publication_date - interval '12 hours') as "date!",
     selected_value,
     COUNT(poll_answers.id) as "n_selected!"
 FROM poll_answers
@@ -30,11 +31,11 @@ JOIN polls
 ON poll_answers.poll_tg_id = polls.tg_id
 WHERE
     polls.kind = $1
-    AND polls.publication_date BETWEEN NOW() - interval '24 hours' AND NOW()
+    AND DATE(polls.publication_date - interval '12 hours') = DATE(NOW() - interval '22 hours')
 GROUP BY
     selected_value,
     polls.kind,
-    DATE(polls.publication_date)
+    DATE(polls.publication_date - interval '12 hours')
             "#,
             kind.to_string()
         )
