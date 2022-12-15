@@ -69,7 +69,11 @@ pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
             "{date}: {rate:+}{beer}\n",
             date = display_date(stat.date),
             rate = 2 - stat.selected_value,
-            beer = if let Weekday::Friday = stat.date.weekday() { " 🍻" } else { "" }
+            beer = if let Weekday::Friday = stat.date.weekday() {
+                " 🍻"
+            } else {
+                ""
+            }
         ));
     }
 

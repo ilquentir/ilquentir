@@ -1,13 +1,14 @@
 [workspace]
 members = [
     'ilquentir-bot',
-    'ilquentir-giphy',
     'ilquentir-config',
+    'ilquentir-giphy',
+    'ilquentir-messages',
     'ilquentir-models',
 ]
 
 [workspace.package]
-version = "0.4.11"
+version = "0.4.11-messages.0"
 authors = ["utterstep"]
 
 [workspace.dependencies]

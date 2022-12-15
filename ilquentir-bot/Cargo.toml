@@ -10,6 +10,7 @@ edition = "2021"
 ilquentir-config = { path = "../ilquentir-config" }
 ilquentir-giphy = { path = "../ilquentir-giphy" }
 ilquentir-graphs = { path = "../ilquentir-graphs" }
+ilquentir-messages = { path = "../ilquentir-messages" }
 ilquentir-models = { path = "../ilquentir-models" }
 
 color-eyre = { workspace = true }

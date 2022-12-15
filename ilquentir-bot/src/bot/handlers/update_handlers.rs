@@ -12,7 +12,8 @@ use tracing::{error, info, warn};
 
 use ilquentir_config::Config;
 use ilquentir_giphy::GiphyApi;
-use ilquentir_graphs::{daily::chart_daily_stats};
+use ilquentir_graphs::daily::chart_daily_stats;
+use ilquentir_messages as messages;
 use ilquentir_models::{PollAnswer, PollKind, PollStat, User};
 
 use crate::bot::helpers::set_typing;
@@ -81,7 +82,7 @@ pub async fn handle_poll_update(
                 Duration::from_secs(2),
                 giphy.get_random_cat_gif()
             ).await.unwrap_or_else(|elapsed| {
-                error!(?elapsed, "timeout while requesting GIPHY api");
+                warn!(?elapsed, "timeout while requesting GIPHY api");
 
                 Ok("https://media0.giphy.com/media/X3Yj4XXXieKYM/giphy-loop.mp4?cid=fd4c87ca9b02f849d4548fc9530a2dbe6e058599dc2630af&rid=giphy-loop.mp4&ct=g".parse().unwrap())
             })?;
@@ -114,25 +115,18 @@ pub async fn handle_poll_update(
 
                         let message_payload = SendMessage::new(
                             chat_id.to_string(),
-                            format!(
-                                r#"Присылаю статистику по ответам всех за сегодня :
-
-```
-  %
-{graph}
-```"#
-                            ),
+                            messages::stats_for_today(&graph),
                         )
                         .parse_mode(teloxide::types::ParseMode::MarkdownV2);
 
                         JsonRequest::new(bot_clone, message_payload).await.unwrap();
                     });
 
-                    r#"Поймали ответ\!
+                    r#"Спасибо за ответ\!
 
-Уже скоро тебе придёт статистика за сегодня, а пока напомню, что доступную стату можно посмотреть по запросу `/get_stat`\ :\)"#
+Скоро тебе придёт статистика за сегодня, а в целом – доступную стату можно посмотреть по запросу `/get_stat`\ :\)"#
                 }
-                PollKind::FoodAllergy => r#"Мур :\)"#,
+                PollKind::FoodAllergy => r#"Meow :\)"#,
             };
 
             let message_payload = SendMessage::new(chat_id.to_string(), message_text)
