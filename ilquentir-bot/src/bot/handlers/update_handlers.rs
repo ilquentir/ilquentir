@@ -12,9 +12,9 @@ use tracing::{info, warn};
 
 use ilquentir_config::Config;
 use ilquentir_giphy::GiphyApi;
-use ilquentir_graphs::daily::chart_daily_stats;
+use ilquentir_graphs::{daily::chart_daily_stats, weekly::personal_weekly_stat};
 use ilquentir_messages::{md_message_payload, message, tg_escape};
-use ilquentir_models::{PollAnswer, PollKind, PollStat, User};
+use ilquentir_models::{PollAnswer, PollKind, PollStat, User, PollWeeklyUserStat};
 
 use crate::bot::helpers::set_typing;
 
@@ -116,7 +116,18 @@ pub async fn handle_poll_update(
                         JsonRequest::new(bot_clone, message_payload).await.unwrap();
                     });
 
-                    message!(md "voted_poll_reaction/generic_response.md")
+                    let your_stat = PollWeeklyUserStat::get_for_last_week(
+                        &mut pool.begin().await?,
+                        PollKind::HowWasYourDay,
+                        chat_id,
+                    )
+                    .await?;
+                    let your_stat_descr = personal_weekly_stat(&your_stat);
+
+                    message!(
+                        md "voted_poll_reaction/generic_response.md",
+                        your_stat_descr = your_stat_descr,
+                    )
                 }
                 PollKind::FoodAllergy => tg_escape("Meow :)"),
             };
