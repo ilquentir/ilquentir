@@ -12,35 +12,21 @@ macro_rules! regex {
 }
 
 #[macro_export]
-macro_rules! md_payload {
-    ($id: expr, $message:expr) => {
-        use ::teloxide::{
-            payloads::{SendMessage, SendMessageSetters},
-            types::ParseMode,
-        };
-
-        SendMessage::new($id, $message).parse_mode(ParseMode::MarkdownV2)
+macro_rules! md_message {
+    ($($args:tt)*) => {
+        $crate::md!(&$crate::message!($($args)*))
     };
 }
 
 #[macro_export]
-macro_rules! md_message_payload {
-    ($id:expr, $($args:tt)*) => {{
-        use ::teloxide::{
-            payloads::{SendMessage, SendMessageSetters},
-            types::ParseMode
-        };
-
-        let message = $crate::message!(md $($args)*);
-        SendMessage::new($id, message).parse_mode(ParseMode::MarkdownV2)
-    }};
+macro_rules! md {
+    ($message:expr) => {
+        $crate::tg_escape($message)
+    };
 }
 
 #[macro_export]
 macro_rules! message {
-    (md $($args:tt)*) => {
-        $crate::tg_escape(&$crate::message!($($args)*))
-    };
     ($message_path:literal) => {{
         format!(include_str!(concat!(::std::env!("CARGO_MANIFEST_DIR"), "/messages/", $message_path)))
     }};
@@ -119,10 +105,7 @@ mod tests {
             "Присылаю статистику по ответам всех за сегодня:\n\n```\n  %\n123\n```"
         );
         assert_eq!(
-            message!(
-                md "update/stats_for_today.md",
-                graph = graph
-            ),
+            md_message!("update/stats_for_today.md", graph = graph),
             "Присылаю статистику по ответам всех за сегодня:\n\n```\n  %\n123\n```"
         );
     }

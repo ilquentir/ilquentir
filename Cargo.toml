@@ -39,4 +39,5 @@ features = [
     "throttle",
     "trace-adaptor",
     "macros",
+    "erased",
 ]

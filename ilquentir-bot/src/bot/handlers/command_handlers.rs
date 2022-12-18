@@ -1,20 +1,21 @@
 use std::time::Duration;
 
 use color_eyre::Result;
-use ilquentir_messages::md_message_payload;
+use ilquentir_messages::{md, md_message};
 use sqlx::{PgPool, Postgres, Transaction};
 use teloxide::{
-    requests::JsonRequest,
     requests::Requester,
     types::{ChatId, Message},
-    Bot,
 };
 use tracing::info;
 
 use ilquentir_graphs::{daily::chart_daily_stats, weekly::personal_weekly_stat};
 use ilquentir_models::{Poll, PollKind, PollStat, PollWeeklyUserStat, User};
 
-use crate::bot::{helpers::set_typing, Command};
+use crate::bot::{
+    helpers::{send_poll, set_typing},
+    Bot, Command,
+};
 
 #[tracing::instrument(skip(bot, pool), err)]
 pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Command) -> Result<()> {
@@ -31,7 +32,7 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
 
             info!(chat_id = %msg.chat.id, user_id = user.tg_id, "disabled user");
 
-            bot.send_message(msg.chat.id, "Деактивировали! Надеюсь, ещё увидимся :)")
+            bot.send_message(msg.chat.id, md!("Деактивировали! Надеюсь, ещё увидимся :)"))
                 .await?;
         }
         Command::GetStat => {
@@ -48,13 +49,12 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
             .await?;
             let your_stat_descr = personal_weekly_stat(&your_stat);
 
-            let message_payload = md_message_payload!(
-                msg.chat.id,
+            let message = md_message!(
                 "stats/get_stat.md",
                 graph = graph,
                 your_stat_descr = your_stat_descr,
             );
-            JsonRequest::new(bot, message_payload).await?;
+            bot.send_message(msg.chat.id, message).await?;
         }
     }
     txn.commit().await?;
@@ -78,7 +78,7 @@ pub async fn handle_start(
             "user already exists and active :)"
         );
 
-        bot.send_message(chat_id_wrapped, "И снова здравствуй :)")
+        bot.send_message(chat_id_wrapped, md!("И снова здравствуй :)"))
             .await?;
 
         return Ok(());
@@ -94,15 +94,17 @@ pub async fn handle_start(
         user_id = user.tg_id,
         "sending welcome sequence to user"
     );
-    bot.send_message(chat_id_wrapped, "Ильквентир приветствует тебя! :)")
+    bot.send_message(chat_id_wrapped, md!("Ильквентир приветствует тебя! :)"))
         .await?;
     set_typing(bot, chat_id, Some(Duration::from_millis(300))).await?;
 
     bot.send_message(
         chat_id_wrapped,
-        r#"Я помогу тебе трекать своё состояние ежедневно и замечать тренды.
+        md!(
+            r#"Я помогу тебе трекать своё состояние ежедневно и замечать тренды.
 
-Раз в неделю я буду присылать подробную стату про тебя и прошедшую неделю."#,
+Раз в неделю я буду присылать подробную стату про тебя и прошедшую неделю."#
+        ),
     )
     .await?;
 
@@ -115,7 +117,9 @@ pub async fn handle_start(
     set_typing(bot, chat_id, Some(Duration::from_millis(500))).await?;
 
     for poll in polls {
-        poll.publish_to_tg(&mut *txn, bot).await?;
+        let poll_message = send_poll(bot, &poll).await?;
+
+        poll.published_to_tg(&mut *txn, poll_message).await?;
     }
 
     info!(chat_id, user_id = user.tg_id, "initial polls sent");

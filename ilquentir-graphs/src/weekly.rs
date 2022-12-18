@@ -1,5 +1,5 @@
 use ilquentir_models::PollWeeklyUserStat;
-use time::{Date, Weekday, macros::format_description};
+use time::{macros::format_description, Date, Weekday};
 
 pub fn display_date(date: Date) -> String {
     let weekday = match date.weekday() {
@@ -14,7 +14,10 @@ pub fn display_date(date: Date) -> String {
 
     let format = format_description!("[day].[month]");
 
-    format!("{weekday} ({date})", date = date.format(format).expect("formatting failed"))
+    format!(
+        "{weekday} ({date})",
+        date = date.format(format).expect("formatting failed")
+    )
 }
 
 pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {

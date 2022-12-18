@@ -3,20 +3,19 @@ use std::time::Duration;
 use color_eyre::Result;
 use sqlx::PgPool;
 use teloxide::{
-    payloads::{SendAnimation, SendMessage, SendMessageSetters, SendPhoto},
-    requests::JsonRequest,
+    payloads::SendMessageSetters,
+    requests::Requester,
     types::{InputFile, Update, UpdateKind},
-    Bot,
 };
 use tracing::{info, warn};
 
 use ilquentir_config::Config;
 use ilquentir_giphy::GiphyApi;
 use ilquentir_graphs::{daily::chart_daily_stats, weekly::personal_weekly_stat};
-use ilquentir_messages::{md_message_payload, message, tg_escape};
-use ilquentir_models::{PollAnswer, PollKind, PollStat, User, PollWeeklyUserStat};
+use ilquentir_messages::{md, md_message};
+use ilquentir_models::{PollAnswer, PollKind, PollStat, PollWeeklyUserStat, User};
 
-use crate::bot::helpers::set_typing;
+use crate::bot::{helpers::set_typing, Bot};
 
 #[tracing::instrument(skip(bot, pool, giphy, config), err)]
 pub async fn handle_poll_update(
@@ -56,34 +55,34 @@ pub async fn handle_poll_update(
 
         if User::count_answered_polls(&mut pool.begin().await?, poll.chat_tg_id).await? == 1 {
             // first user poll, send detailed info
-            let photo_payload = SendPhoto::new(
+            let message = bot.send_photo(
                 chat_id.to_string(),
                 InputFile::url(
                     "https://utterstep-public.fra1.digitaloceanspaces.com/tg_image_2763456418.jpeg"
                         .parse()?,
                 ),
-            );
-            let message = JsonRequest::new(bot.clone(), photo_payload).await?;
+            ).await?;
             set_typing(&bot, chat_id, Some(Duration::from_millis(1000))).await?;
 
-            let message_payload =
-                md_message_payload!(chat_id.to_string(), "voted_poll_reaction/first_time.md")
-                    .reply_to_message_id(message.id);
-            JsonRequest::new(bot.clone(), message_payload).await?;
+            let message_text = md_message!("voted_poll_reaction/first_time.md");
+
+            bot.send_message(chat_id.to_string(), message_text)
+                .reply_to_message_id(message.id)
+                .await?;
         } else {
             // send generic response
             let cat_gif = tokio::time::timeout(
                 Duration::from_secs(2),
                 giphy.get_random_cat_gif()
-            ).await.unwrap_or_else(|elapsed| {
-                warn!(?elapsed, "timeout while requesting GIPHY api");
+            ).await.unwrap_or_else(|_| {
+                warn!("timeout while requesting GIPHY api");
 
                 Ok("https://media0.giphy.com/media/X3Yj4XXXieKYM/giphy-loop.mp4?cid=fd4c87ca9b02f849d4548fc9530a2dbe6e058599dc2630af&rid=giphy-loop.mp4&ct=g".parse().unwrap())
             })?;
 
             info!(user_id, chat_id, "sending cat gif");
-            let photo_payload = SendAnimation::new(chat_id.to_string(), InputFile::url(cat_gif));
-            JsonRequest::new(bot.clone(), photo_payload).await?;
+            bot.send_animation(chat_id.to_string(), InputFile::url(cat_gif))
+                .await?;
 
             info!(user_id, chat_id, "sending message");
             let message_text = match poll.kind {
@@ -107,13 +106,13 @@ pub async fn handle_poll_update(
                         .unwrap();
                         let graph = chart_daily_stats(&stats).unwrap();
 
-                        let message_payload = md_message_payload!(
-                            chat_id.to_string(),
-                            "voted_poll_reaction/stats_for_today.md",
-                            graph = graph
-                        );
+                        let message_text =
+                            md_message!("voted_poll_reaction/stats_for_today.md", graph = graph);
 
-                        JsonRequest::new(bot_clone, message_payload).await.unwrap();
+                        bot_clone
+                            .send_message(chat_id.to_string(), message_text)
+                            .await
+                            .unwrap();
                     });
 
                     let your_stat = PollWeeklyUserStat::get_for_last_week(
@@ -124,17 +123,15 @@ pub async fn handle_poll_update(
                     .await?;
                     let your_stat_descr = personal_weekly_stat(&your_stat);
 
-                    message!(
-                        md "voted_poll_reaction/generic_response.md",
+                    md_message!(
+                        "voted_poll_reaction/generic_response.md",
                         your_stat_descr = your_stat_descr,
                     )
                 }
-                PollKind::FoodAllergy => tg_escape("Meow :)"),
+                PollKind::FoodAllergy => md!("Meow :)"),
             };
 
-            let message_payload = SendMessage::new(chat_id.to_string(), message_text)
-                .parse_mode(teloxide::types::ParseMode::MarkdownV2);
-            JsonRequest::new(bot.clone(), message_payload).await?;
+            bot.send_message(chat_id.to_string(), message_text).await?;
         }
 
         info!(

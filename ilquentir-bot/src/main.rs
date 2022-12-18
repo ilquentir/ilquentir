@@ -28,7 +28,7 @@ async fn main() -> Result<()> {
     let scheduler = Scheduler::new(&dispatcher);
     let scheduler_shutdown_token = scheduler.shutdown_token();
 
-    tokio::spawn(async move { scheduler.start(&pool, &bot, &config).await });
+    tokio::spawn(async move { scheduler.start(&pool, &bot.clone(), &config).await });
     dispatcher.dispatch().await;
     info!("dispatcher stopped working, shutting down scheduler");
     scheduler_shutdown_token.shutdown();

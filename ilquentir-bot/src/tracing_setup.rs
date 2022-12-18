@@ -42,7 +42,10 @@ pub fn setup(config: &Config) -> Result<()> {
         .with(
             HierarchicalLayer::new(2)
                 .with_targets(true)
-                .with_bracketed_fields(true),
+                .with_indent_lines(true)
+                .with_bracketed_fields(true)
+                .with_thread_names(true)
+                .with_thread_ids(true),
         )
         .with(telemetry)
         .init();

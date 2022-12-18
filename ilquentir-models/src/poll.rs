@@ -4,12 +4,7 @@ use color_eyre::Result;
 use sqlx::FromRow;
 use tracing::{debug, error, info};
 
-use teloxide::{
-    payloads::{SendPoll, SendPollSetters},
-    requests::JsonRequest,
-    types::{MediaKind, MessageKind},
-    Bot,
-};
+use teloxide::types::{MediaKind, Message, MessageKind};
 
 use crate::{PgTransaction, PollKind, User};
 
@@ -188,25 +183,12 @@ WHERE
         .await?)
     }
 
-    #[tracing::instrument(skip(bot, txn), err)]
-    pub async fn publish_to_tg<'t>(
+    #[tracing::instrument(skip(txn), err)]
+    pub async fn published_to_tg<'t>(
         mut self,
         txn: &mut PgTransaction<'t>,
-        bot: &Bot,
+        poll_message: Message,
     ) -> Result<Self> {
-        info!(poll_id = self.id, "sending poll");
-        let poll_options = self.kind.options();
-
-        let poll_payload = SendPoll::new(
-            self.chat_tg_id.to_string(),
-            self.kind.question(),
-            poll_options,
-        )
-        .allows_multiple_answers(self.kind.allows_multiple_answers());
-        let poll_message = JsonRequest::new(bot.clone(), poll_payload).await?;
-
-        info!(poll_id = self.id, "poll sent");
-
         // FIXME: do not clone here
         if let MessageKind::Common(message) = poll_message.kind.clone() {
             if let MediaKind::Poll(tg_poll) = message.media_kind {

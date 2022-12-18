@@ -2,14 +2,14 @@ use std::sync::{atomic::AtomicBool, Arc};
 
 use color_eyre::Result;
 use sqlx::PgPool;
-use teloxide::{dispatching::ShutdownToken as DispatcherShutdownToken, Bot};
+use teloxide::dispatching::ShutdownToken as DispatcherShutdownToken;
 use tokio::time::interval;
 use tracing::{error, info};
 
 use ilquentir_config::Config;
 use ilquentir_models::Poll;
 
-use crate::bot::Dispatcher;
+use crate::bot::{helpers::send_poll, Bot, Dispatcher};
 
 #[derive(Clone)]
 pub struct Scheduler {
@@ -53,8 +53,13 @@ impl Scheduler {
 
             if let Err(e) = schedule_result {
                 error!(error = %e, "got an error while scheduling");
+
+                info!("shutting down scheduler");
                 self.shutdown_token().shutdown();
+
+                info!("shutting down dispatcher");
                 self.dispatcher_shutdown_token.shutdown()?.await;
+                info!("dispatcher shut down");
 
                 return Err(e);
             };
@@ -97,7 +102,9 @@ pub async fn handle_scheduled(bot: &Bot, pool: &PgPool) -> Result<()> {
 
         let mut txn = pool.begin().await?;
 
-        poll.publish_to_tg(&mut txn, bot).await?;
+        let poll_message = send_poll(bot, &poll).await?;
+
+        poll.published_to_tg(&mut txn, poll_message).await?;
 
         txn.commit().await?;
     }
