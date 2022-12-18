@@ -81,9 +81,7 @@ impl PollKind {
 
     pub fn options(self) -> Vec<String> {
         match self {
-            Self::HowWasYourDay => {
-                &["+2 (супер!)", "+1", "0", "-1", "-2 (отвратительно)"][..]
-            }
+            Self::HowWasYourDay => &["+2 (супер!)", "+1", "0", "-1", "-2 (отвратительно)"][..],
             Self::FoodAllergy => &[
                 "Shortness of breath",
                 "Itching",

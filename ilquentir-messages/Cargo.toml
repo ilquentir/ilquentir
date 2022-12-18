@@ -8,6 +8,10 @@ edition = "2021"
 
 [dependencies]
 pulldown-cmark = "0.9"
+pulldown-cmark-to-cmark = "10"
+regex = "1.7"
 
 color-eyre = { workspace = true }
-indoc = { workspace = true }
+once_cell = { workspace = true }
+
+teloxide = { workspace = true }
