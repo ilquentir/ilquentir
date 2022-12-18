@@ -8,11 +8,12 @@ use teloxide::{
     types::{InputFile, Update, UpdateKind},
     Bot,
 };
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
 use ilquentir_config::Config;
 use ilquentir_giphy::GiphyApi;
-use ilquentir_graphs::{daily::chart_daily_stats};
+use ilquentir_graphs::daily::chart_daily_stats;
+use ilquentir_messages::{md_message_payload, message, tg_escape};
 use ilquentir_models::{PollAnswer, PollKind, PollStat, User};
 
 use crate::bot::helpers::set_typing;
@@ -65,15 +66,9 @@ pub async fn handle_poll_update(
             let message = JsonRequest::new(bot.clone(), photo_payload).await?;
             set_typing(&bot, chat_id, Some(Duration::from_millis(1000))).await?;
 
-            let message_payload = SendMessage::new(
-                chat_id.to_string(),
-                r#"Спасибо! Вот пример трендов, которые можно замечать:
-На этом графике ты видишь результаты опроса ~500 русскоязычных околоайтишников, которые отвечали на этот же вопрос в 2022 году.
-
-Отвечая, ты будешь видеть свою статистику, общую статистику и получишь возможность сравниться.
-Статистика будет приходить после твоего ответа, если ты хочешь получить её в любой другой момент – попроси меня командой `/get_stat`, буду рад помочь :)"#,
-            )
-            .reply_to_message_id(message.id);
+            let message_payload =
+                md_message_payload!(chat_id.to_string(), "voted_poll_reaction/first_time.md")
+                    .reply_to_message_id(message.id);
             JsonRequest::new(bot.clone(), message_payload).await?;
         } else {
             // send generic response
@@ -81,7 +76,7 @@ pub async fn handle_poll_update(
                 Duration::from_secs(2),
                 giphy.get_random_cat_gif()
             ).await.unwrap_or_else(|elapsed| {
-                error!(?elapsed, "timeout while requesting GIPHY api");
+                warn!(?elapsed, "timeout while requesting GIPHY api");
 
                 Ok("https://media0.giphy.com/media/X3Yj4XXXieKYM/giphy-loop.mp4?cid=fd4c87ca9b02f849d4548fc9530a2dbe6e058599dc2630af&rid=giphy-loop.mp4&ct=g".parse().unwrap())
             })?;
@@ -112,27 +107,18 @@ pub async fn handle_poll_update(
                         .unwrap();
                         let graph = chart_daily_stats(&stats).unwrap();
 
-                        let message_payload = SendMessage::new(
+                        let message_payload = md_message_payload!(
                             chat_id.to_string(),
-                            format!(
-                                r#"Присылаю статистику по ответам всех за сегодня :
-
-```
-  %
-{graph}
-```"#
-                            ),
-                        )
-                        .parse_mode(teloxide::types::ParseMode::MarkdownV2);
+                            "voted_poll_reaction/stats_for_today.md",
+                            graph = graph
+                        );
 
                         JsonRequest::new(bot_clone, message_payload).await.unwrap();
                     });
 
-                    r#"Поймали ответ\!
-
-Уже скоро тебе придёт статистика за сегодня, а пока напомню, что доступную стату можно посмотреть по запросу `/get_stat`\ :\)"#
+                    message!(md "voted_poll_reaction/generic_response.md")
                 }
-                PollKind::FoodAllergy => r#"Мур :\)"#,
+                PollKind::FoodAllergy => tg_escape("Meow :)"),
             };
 
             let message_payload = SendMessage::new(chat_id.to_string(), message_text)

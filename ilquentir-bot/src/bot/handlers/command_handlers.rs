@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use color_eyre::Result;
+use ilquentir_messages::md_message_payload;
 use sqlx::{PgPool, Postgres, Transaction};
 use teloxide::{
-    payloads::{SendChatAction, SendMessage, SendMessageSetters},
     requests::JsonRequest,
     requests::Requester,
     types::{ChatId, Message},
@@ -48,27 +48,12 @@ pub async fn handle_command(bot: Bot, pool: PgPool, msg: Message, command: Comma
             .await?;
             let your_stat_descr = personal_weekly_stat(&your_stat);
 
-            let message_payload = SendMessage::new(
+            let message_payload = md_message_payload!(
                 msg.chat.id,
-                format!(
-                    r#"Держи, вот статистика по всем пользователям за последний день:
-
-```
-%
-{graph}
-```
-
-И твоя за неделю:
-{your_stat_descr}
-
-Ещё есть [общий график](https://utterstep-public.fra1.digitaloceanspaces.com/first_week.png) за прошлую неделю\.
-
-Надеюсь, тебе с нами интересно\! Напомню, что ты нам очень поможешь, заполнив [небольшой опрос](https://forms.gle/vDrswFF49tNqiYeH6) на 5 минут :\)
-"#
-                ),
-            )
-            .parse_mode(teloxide::types::ParseMode::MarkdownV2);
-
+                "stats/get_stat.md",
+                graph = graph,
+                your_stat_descr = your_stat_descr,
+            );
             JsonRequest::new(bot, message_payload).await?;
         }
     }
@@ -111,9 +96,6 @@ pub async fn handle_start(
     );
     bot.send_message(chat_id_wrapped, "Ильквентир приветствует тебя! :)")
         .await?;
-    let payload = SendChatAction::new(chat_id_wrapped, teloxide::types::ChatAction::Typing);
-    JsonRequest::new(bot.clone(), payload.clone()).await?;
-
     set_typing(bot, chat_id, Some(Duration::from_millis(300))).await?;
 
     bot.send_message(
@@ -123,7 +105,6 @@ pub async fn handle_start(
 Раз в неделю я буду присылать подробную стату про тебя и прошедшую неделю."#,
     )
     .await?;
-    JsonRequest::new(bot.clone(), payload.clone()).await?;
 
     info!(
         chat_id,
@@ -131,8 +112,7 @@ pub async fn handle_start(
         "sent welcome sequence, sending {} initial polls",
         polls.len(),
     );
-
-    set_typing(bot, chat_id, Some(Duration::from_millis(1000))).await?;
+    set_typing(bot, chat_id, Some(Duration::from_millis(500))).await?;
 
     for poll in polls {
         poll.publish_to_tg(&mut *txn, bot).await?;

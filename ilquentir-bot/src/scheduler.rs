@@ -53,6 +53,7 @@ impl Scheduler {
 
             if let Err(e) = schedule_result {
                 error!(error = %e, "got an error while scheduling");
+                self.shutdown_token().shutdown();
                 self.dispatcher_shutdown_token.shutdown()?.await;
 
                 return Err(e);

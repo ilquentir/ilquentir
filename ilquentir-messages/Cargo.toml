@@ -1,0 +1,17 @@
+[package]
+name = "ilquentir-messages"
+version = { workspace = true }
+authors = { workspace = true }
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pulldown-cmark = "0.9"
+pulldown-cmark-to-cmark = "10"
+regex = "1.7"
+
+color-eyre = { workspace = true }
+once_cell = { workspace = true }
+
+teloxide = { workspace = true }

@@ -696,6 +696,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "getopts"
+version = "0.2.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14dbbfd5c71d70241ecf9e6f13737f7b5ce823821063188d7e46c41d371eebd5"
+dependencies = [
+ "unicode-width",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -939,7 +948,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-bot"
-version = "0.4.11"
+version = "0.4.11-messages.0"
 dependencies = [
  "color-eyre",
  "dotenvy",
@@ -947,6 +956,7 @@ dependencies = [
  "ilquentir-config",
  "ilquentir-giphy",
  "ilquentir-graphs",
+ "ilquentir-messages",
  "ilquentir-models",
  "opentelemetry",
  "opentelemetry-otlp",
@@ -966,7 +976,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-config"
-version = "0.4.11"
+version = "0.4.11-messages.0"
 dependencies = [
  "color-eyre",
  "envy",
@@ -976,7 +986,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-giphy"
-version = "0.4.11"
+version = "0.4.11-messages.0"
 dependencies = [
  "color-eyre",
  "giphy",
@@ -987,7 +997,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-graphs"
-version = "0.4.11"
+version = "0.4.11-messages.0"
 dependencies = [
  "color-eyre",
  "ilquentir-models",
@@ -998,8 +1008,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ilquentir-messages"
+version = "0.4.11-messages.0"
+dependencies = [
+ "color-eyre",
+ "once_cell",
+ "pulldown-cmark",
+ "pulldown-cmark-to-cmark",
+ "regex",
+ "teloxide",
+]
+
+[[package]]
 name = "ilquentir-models"
-version = "0.4.11"
+version = "0.4.11-messages.0"
 dependencies = [
  "color-eyre",
  "sqlx",
@@ -1632,6 +1654,27 @@ checksum = "747761bc3dc48f9a34553bf65605cf6cb6288ba219f3450b4275dbd81539551a"
 dependencies = [
  "bytes",
  "prost",
+]
+
+[[package]]
+name = "pulldown-cmark"
+version = "0.9.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d9cc634bc78768157b5cbfe988ffcd1dcba95cd2b2f03a88316c08c6d00ed63"
+dependencies = [
+ "bitflags",
+ "getopts",
+ "memchr",
+ "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark-to-cmark"
+version = "10.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0194e6e1966c23cc5fd988714f85b18d548d773e81965413555d96569931833d"
+dependencies = [
+ "pulldown-cmark",
 ]
 
 [[package]]
@@ -2702,6 +2745,12 @@ name = "unicode-segmentation"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fdbf052a0783de01e944a6ce7a8cb939e295b1e7be835a1112c3b9a7f047a5a"
+
+[[package]]
+name = "unicode-width"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
 
 [[package]]
 name = "unicode_categories"

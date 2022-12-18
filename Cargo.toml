@@ -1,13 +1,14 @@
 [workspace]
 members = [
     'ilquentir-bot',
-    'ilquentir-giphy',
     'ilquentir-config',
+    'ilquentir-giphy',
+    'ilquentir-messages',
     'ilquentir-models',
 ]
 
 [workspace.package]
-version = "0.4.11"
+version = "0.4.11-messages.0"
 authors = ["utterstep"]
 
 [workspace.dependencies]
@@ -15,6 +16,7 @@ dotenvy = "0.15"
 envy = "0.4"
 color-eyre = "0.6"
 indoc = "1"
+once_cell = "1"
 tracing = "0.1"
 tracing-tree = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "parking_lot"] }
