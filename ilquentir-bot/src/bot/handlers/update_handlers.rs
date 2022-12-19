@@ -17,11 +17,11 @@ use ilquentir_models::{PollAnswer, PollKind, PollStat, PollWeeklyUserStat, User}
 
 use crate::bot::{helpers::set_typing, Bot};
 
-#[tracing::instrument(skip(bot, pool, giphy, config), err)]
+#[tracing::instrument(skip(bot, pool, _giphy, config), err)]
 pub async fn handle_poll_update(
     bot: Bot,
     pool: PgPool,
-    giphy: GiphyApi,
+    _giphy: GiphyApi,
     config: Config,
     update: Update,
 ) -> Result<()> {
@@ -71,18 +71,18 @@ pub async fn handle_poll_update(
                 .await?;
         } else {
             // send generic response
-            let cat_gif = tokio::time::timeout(
-                Duration::from_secs(2),
-                giphy.get_random_cat_gif()
-            ).await.unwrap_or_else(|_| {
-                warn!("timeout while requesting GIPHY api");
+            // let cat_gif = tokio::time::timeout(
+            //     Duration::from_secs(2),
+            //     giphy.get_random_cat_gif()
+            // ).await.unwrap_or_else(|_| {
+            //     warn!("timeout while requesting GIPHY api");
 
-                Ok("https://media0.giphy.com/media/X3Yj4XXXieKYM/giphy-loop.mp4?cid=fd4c87ca9b02f849d4548fc9530a2dbe6e058599dc2630af&rid=giphy-loop.mp4&ct=g".parse().unwrap())
-            })?;
+            //     Ok("https://media0.giphy.com/media/X3Yj4XXXieKYM/giphy-loop.mp4?cid=fd4c87ca9b02f849d4548fc9530a2dbe6e058599dc2630af&rid=giphy-loop.mp4&ct=g".parse().unwrap())
+            // })?;
 
-            info!(user_id, chat_id, "sending cat gif");
-            bot.send_animation(chat_id.to_string(), InputFile::url(cat_gif))
-                .await?;
+            // info!(user_id, chat_id, "sending cat gif");
+            // bot.send_animation(chat_id.to_string(), InputFile::url(cat_gif))
+            //     .await?;
 
             info!(user_id, chat_id, "sending message");
             let message_text = match poll.kind {
