@@ -1,7 +1,7 @@
-use color_eyre::{eyre::Result, Report};
+use color_eyre::{Report, Result};
 use sqlx::PgPool;
 use teloxide::{
-    adaptors::DefaultParseMode,
+    adaptors::{trace::Settings, DefaultParseMode, Trace},
     dispatching::{DefaultKey, HandlerExt, UpdateFilterExt},
     prelude::Dispatcher as TgDispatcher,
     requests::{Requester, RequesterExt},
@@ -22,17 +22,25 @@ use self::{
     handlers::{handle_command, handle_poll_update},
 };
 
-pub type Bot = DefaultParseMode<TgBot>;
+pub type Bot = Trace<DefaultParseMode<TgBot>>;
 pub type Dispatcher<'a> = TgDispatcher<Bot, Report, DefaultKey>;
+
+pub async fn create_bot() -> Result<Bot> {
+    let bot = TgBot::from_env()
+        .parse_mode(ParseMode::MarkdownV2)
+        .trace(Settings::TRACE_EVERYTHING);
+    bot.set_my_commands(commands::Command::bot_commands())
+        .await?;
+
+    Ok(bot)
+}
 
 pub async fn create_bot_and_dispatcher(
     pool: PgPool,
     giphy: GiphyApi,
     config: &Config,
 ) -> Result<(Dispatcher, Bot)> {
-    let bot = TgBot::from_env().parse_mode(ParseMode::MarkdownV2);
-    bot.set_my_commands(commands::Command::bot_commands())
-        .await?;
+    let bot = create_bot().await?;
 
     let handler = dptree::entry()
         .branch(

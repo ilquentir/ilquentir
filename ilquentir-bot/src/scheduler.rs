@@ -59,7 +59,7 @@ impl Scheduler {
 
                 info!("shutting down dispatcher");
                 self.dispatcher_shutdown_token.shutdown()?.await;
-                info!("dispatcher shut down");
+                info!("dispatcher has been shut down");
 
                 return Err(e);
             };
