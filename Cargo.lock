@@ -948,7 +948,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-bot"
-version = "0.4.12"
+version = "0.4.13"
 dependencies = [
  "color-eyre",
  "dotenvy",
@@ -976,7 +976,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-config"
-version = "0.4.12"
+version = "0.4.13"
 dependencies = [
  "color-eyre",
  "envy",
@@ -986,7 +986,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-giphy"
-version = "0.4.12"
+version = "0.4.13"
 dependencies = [
  "color-eyre",
  "giphy",
@@ -997,7 +997,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-graphs"
-version = "0.4.12"
+version = "0.4.13"
 dependencies = [
  "color-eyre",
  "ilquentir-models",
@@ -1009,7 +1009,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-messages"
-version = "0.4.12"
+version = "0.4.13"
 dependencies = [
  "color-eyre",
  "once_cell",
@@ -1021,7 +1021,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-models"
-version = "0.4.12"
+version = "0.4.13"
 dependencies = [
  "color-eyre",
  "sqlx",
