@@ -5,9 +5,9 @@
 {graph}
 ```
 
-И твоя за неделю:
+Твои ответы за неделю:
 {your_stat_descr}
 
-Ещё есть [общий график](https://utterstep-public.fra1.digitaloceanspaces.com/first_week.png) за *поза*прошлую неделю.
+И [общий график](https://utterstep-public.fra1.digitaloceanspaces.com/19-12-poll.png) за последние две недели.
 
 Надеюсь, тебе с нами интересно! Напомню, что ты нам очень поможешь, заполнив [небольшой опрос](https://forms.gle/vDrswFF49tNqiYeH6), это займёт примерно 5 минут :)
