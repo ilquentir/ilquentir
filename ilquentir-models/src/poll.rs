@@ -98,8 +98,6 @@ RETURNING
             return Ok(None);
         };
 
-        dbg!(&self);
-
         Ok(Some(
             sqlx::query_as!(
                 Self,
