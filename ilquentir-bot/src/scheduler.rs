@@ -102,7 +102,7 @@ pub async fn handle_scheduled(bot: &Bot, pool: &PgPool) -> Result<()> {
 
         let mut txn = pool.begin().await?;
 
-        let poll_message = send_poll(bot, &poll).await?;
+        let poll_message = send_poll(bot, &mut txn, &poll).await?;
 
         poll.published_to_tg(&mut txn, poll_message).await?;
 

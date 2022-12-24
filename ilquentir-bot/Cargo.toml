@@ -7,18 +7,26 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# intra-workspace dependencies
 ilquentir-config = { path = "../ilquentir-config" }
 ilquentir-giphy = { path = "../ilquentir-giphy" }
 ilquentir-graphs = { path = "../ilquentir-graphs" }
 ilquentir-messages = { path = "../ilquentir-messages" }
 ilquentir-models = { path = "../ilquentir-models" }
 
+# generic dependencies
 color-eyre = { workspace = true }
 dotenvy = { workspace = true }
-tokio = { workspace = true }
+once_cell = { workspace = true }
+rand = { workspace = true }
 serde = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true }
 
+# GRPC realization for tracing-opentelemetry
 tonic = { version = "0.8", features = ["tls", "tls-roots"] }
+
+# Tracing + telemetry features
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 tracing-tree = { workspace = true }
@@ -27,9 +35,13 @@ opentelemetry = { version = "0.18", features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "0.11", features = ["tls"] }
 webpki-roots = "0.22"
 
+# Telegram dependencies
 dptree = "0.3"
 teloxide = { workspace = true }
 
-rand = { workspace = true }
-time = { workspace = true }
+# SQLx
 sqlx = { workspace = true }
+
+# specific utilities
+stable-hash = "0.4"
+indexmap = "1"

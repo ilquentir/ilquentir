@@ -13,13 +13,16 @@ use teloxide::{
 use ilquentir_config::Config;
 use ilquentir_giphy::GiphyApi;
 
+pub(self) mod callbacks;
 pub mod commands;
 pub mod handlers;
 pub mod helpers;
 
+mod daily_events;
+
 use self::{
     commands::Command,
-    handlers::{handle_command, handle_poll_update},
+    handlers::{handle_callback, handle_command, handle_poll_update},
 };
 
 pub type Bot = Trace<DefaultParseMode<TgBot>>;
@@ -54,7 +57,8 @@ pub async fn create_bot_and_dispatcher(
             dptree::entry()
                 .filter(|update: Update| matches!(update.kind, UpdateKind::Poll(_)))
                 .endpoint(handle_poll_update),
-        );
+        )
+        .branch(Update::filter_callback_query().endpoint(handle_callback));
 
     Ok((
         TgDispatcher::builder(bot.clone(), handler)

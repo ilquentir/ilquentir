@@ -58,10 +58,7 @@ pub fn personal_weekly_stat(stats: &[PollWeeklyUserStat]) -> String {
     let best_str = if best_days.is_empty() {
         "На этой неделе было не очень весело, надеюсь, следующая пройдёт лучше!".to_owned()
     } else {
-        format!(
-            "Лучшие дни последней недели: {}.",
-            best_days.join(", ")
-        )
+        format!("Лучшие дни последней недели: {}.", best_days.join(", "))
     };
 
     let mut result = "```\n".to_owned();

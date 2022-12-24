@@ -3,6 +3,9 @@ use sqlx::{Postgres, Transaction};
 mod poll_answer;
 pub use poll_answer::PollAnswer;
 
+mod poll_custom_options;
+pub use poll_custom_options::PollCustomOptions;
+
 mod poll_kind;
 pub use poll_kind::PollKind;
 
@@ -18,4 +21,4 @@ pub use poll::Poll;
 mod user;
 pub use user::User;
 
-pub(crate) type PgTransaction<'t> = Transaction<'t, Postgres>;
+pub type PgTransaction<'t> = Transaction<'t, Postgres>;

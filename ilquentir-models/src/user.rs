@@ -11,10 +11,7 @@ pub struct User {
 
 impl User {
     #[tracing::instrument(skip(txn), err)]
-    pub async fn get_user_by_id<'t>(
-        txn: &mut PgTransaction<'t>,
-        user_id: i64,
-    ) -> Result<Option<Self>> {
+    pub async fn get_user_by_id(txn: &mut PgTransaction<'_>, user_id: i64) -> Result<Option<Self>> {
         Ok(sqlx::query_as!(
             Self,
             r#"
@@ -31,7 +28,7 @@ WHERE
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn activate<'t>(txn: &mut PgTransaction<'t>, user_id: i64) -> Result<Self> {
+    pub async fn activate(txn: &mut PgTransaction<'_>, user_id: i64) -> Result<Self> {
         Ok(sqlx::query_as!(
             Self,
             r#"
@@ -47,7 +44,7 @@ RETURNING tg_id, active
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn deactivate<'t>(txn: &mut PgTransaction<'t>, user_id: i64) -> Result<Self> {
+    pub async fn deactivate(txn: &mut PgTransaction<'_>, user_id: i64) -> Result<Self> {
         Ok(sqlx::query_as!(
             Self,
             r#"
@@ -63,10 +60,7 @@ RETURNING tg_id, active
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn count_answered_polls<'t>(
-        txn: &mut PgTransaction<'t>,
-        user_id: i64,
-    ) -> Result<i64> {
+    pub async fn count_answered_polls(txn: &mut PgTransaction<'_>, user_id: i64) -> Result<i64> {
         Ok(sqlx::query!(
             r#"
 SELECT COUNT(DISTINCT poll.tg_id) as "n_answered!"
@@ -83,7 +77,7 @@ WHERE poll.chat_tg_id = $1
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn get_active<'t>(txn: &mut PgTransaction<'t>) -> Result<Vec<Self>> {
+    pub async fn get_active(txn: &mut PgTransaction<'_>) -> Result<Vec<Self>> {
         Ok(sqlx::query_as!(
             Self,
             r#"

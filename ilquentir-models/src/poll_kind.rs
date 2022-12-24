@@ -1,5 +1,9 @@
+use color_eyre::Result;
+
 use time::{macros::time, Duration, OffsetDateTime, Time};
 use tracing::error;
+
+use crate::{PgTransaction, PollCustomOptions};
 
 /// Describes possible kind of polls
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type)]
@@ -9,12 +13,15 @@ pub enum PollKind {
     HowWasYourDay,
     /// Was there any
     FoodAllergy,
+    ///
+    DailyEvents,
 }
 
 impl ToString for PollKind {
     fn to_string(&self) -> String {
         match self {
             Self::HowWasYourDay => "how_was_your_day".to_owned(),
+            Self::DailyEvents => "daily_events".to_owned(),
             Self::FoodAllergy => "food_allergy".to_owned(),
         }
     }
@@ -25,6 +32,8 @@ impl PollKind {
         match self {
             // 22:00 MSK = 19:00 UTC
             Self::HowWasYourDay => Some(time!(19:00)),
+            // 22:00 MSK = 19:00 UTC
+            Self::DailyEvents => Some(time!(19:00)),
             // 21:00 MSK = 18:00 UTC
             Self::FoodAllergy => Some(time!(18:00)),
         }
@@ -68,6 +77,7 @@ impl PollKind {
             Self::FoodAllergy => {
                 "Had you encountered any of described feelings after the meal today?"
             }
+            Self::DailyEvents => "Отметь, что сегодня происходило:",
         }
         .to_owned()
     }
@@ -76,22 +86,36 @@ impl PollKind {
         match self {
             Self::HowWasYourDay => false,
             Self::FoodAllergy => true,
+            Self::DailyEvents => true,
         }
     }
 
-    pub fn options(self) -> Vec<String> {
-        match self {
-            Self::HowWasYourDay => &["+2 (супер!)", "+1", "0", "-1", "-2 (отвратительно)"][..],
-            Self::FoodAllergy => &[
+    #[tracing::instrument]
+    pub async fn options(
+        self,
+        txn: &mut PgTransaction<'_>,
+        user_tg_id: i64,
+    ) -> Result<Vec<String>> {
+        Ok(match self {
+            Self::HowWasYourDay => ["+2 (супер!)", "+1", "0", "-1", "-2 (отвратительно)"][..]
+                .iter()
+                .map(|&option| option.to_string())
+                .collect(),
+            Self::FoodAllergy => [
                 "Shortness of breath",
                 "Itching",
                 "Bloating",
                 "Nope, nothing :)",
-            ][..],
-        }
-        .iter()
-        .map(|&option| option.to_string())
-        .collect()
+            ][..]
+                .iter()
+                .map(|&option| option.to_string())
+                .collect(),
+            Self::DailyEvents => {
+                PollCustomOptions::get_for_user(txn, user_tg_id, self)
+                    .await?
+                    .options
+            }
+        })
     }
 }
 
@@ -102,12 +126,21 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_ord() {
+        assert!(PollKind::HowWasYourDay < PollKind::HowWasYourDay);
+    }
+
+    #[test]
     fn test_next_time() {
-        for kind in [PollKind::HowWasYourDay, PollKind::FoodAllergy] {
+        for kind in [
+            PollKind::HowWasYourDay,
+            PollKind::FoodAllergy,
+            PollKind::DailyEvents,
+        ] {
             // match is here to be sure that it's impossible
             // to add new enum kind without testing it :)
             match kind {
-                PollKind::HowWasYourDay => {
+                PollKind::HowWasYourDay | PollKind::DailyEvents => {
                     // every day at 19:00 UTC
 
                     assert_eq!(

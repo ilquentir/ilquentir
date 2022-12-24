@@ -9,28 +9,30 @@ use crate::{PgTransaction, Poll};
 pub struct PollAnswer {
     pub poll_tg_id: String,
     pub selected_value: i32,
+    pub selected_value_text: String,
 }
 
 impl PollAnswer {
     #[tracing::instrument(skip(txn), err)]
-    pub async fn save_answer<'t>(txn: &mut PgTransaction<'t>, tg_poll: &TgPoll) -> Result<Poll> {
+    pub async fn save_answer(txn: &mut PgTransaction<'_>, tg_poll: &TgPoll) -> Result<Poll> {
         info!(tg_poll = tg_poll.id, "saving results for poll");
-        let option_ids = tg_poll
+        let options = tg_poll
             .options
             .iter()
             .enumerate()
-            .filter_map(|(idx, option)| (option.voter_count > 0).then_some(idx));
+            .filter(|(_idx, option)| option.voter_count > 0);
 
-        for choice in option_ids {
+        for (idx, option) in options {
             sqlx::query_as!(
                 Self,
                 r#"
-INSERT INTO poll_answers (poll_tg_id, selected_value)
-VALUES ($1, $2)
-RETURNING poll_tg_id, selected_value
+INSERT INTO poll_answers (poll_tg_id, selected_value, selected_value_text)
+VALUES ($1, $2, $3)
+RETURNING poll_tg_id, selected_value, selected_value_text
                 "#,
                 tg_poll.id,
-                choice as i32,
+                idx as i32,
+                option.text,
             )
             .fetch_one(&mut *txn)
             .await?;

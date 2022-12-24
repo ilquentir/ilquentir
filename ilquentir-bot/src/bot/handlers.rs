@@ -1,5 +1,7 @@
-mod command_handlers;
-mod update_handlers;
+mod callback;
+mod command;
+mod update;
 
-pub use command_handlers::*;
-pub use update_handlers::*;
+pub use callback::*;
+pub use command::*;
+pub use update::*;

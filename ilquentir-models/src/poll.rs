@@ -20,10 +20,7 @@ pub struct Poll {
 
 impl Poll {
     #[tracing::instrument(err)]
-    pub async fn create_for_user<'t>(
-        txn: &mut PgTransaction<'t>,
-        user: &'_ User,
-    ) -> Result<Vec<Self>> {
+    pub async fn create_for_user(txn: &mut PgTransaction<'_>, user: &'_ User) -> Result<Vec<Self>> {
         let publication_date = time::OffsetDateTime::now_utc();
 
         let polls = user
@@ -49,7 +46,7 @@ impl Poll {
     }
 
     #[tracing::instrument(skip(txn), err)]
-    async fn insert<'t>(self, txn: &mut PgTransaction<'t>) -> Result<Self> {
+    async fn insert(self, txn: &mut PgTransaction<'_>) -> Result<Self> {
         Ok(sqlx::query_as!(
             Self,
             r#"
@@ -78,7 +75,7 @@ RETURNING
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn schedule_next<'t>(self, txn: &mut PgTransaction<'t>) -> Result<Self> {
+    pub async fn schedule_next(self, txn: &mut PgTransaction<'_>) -> Result<Self> {
         let next_at = self.kind.schedule_next(self.publication_date);
         let poll = Self {
             publication_date: next_at,
@@ -90,7 +87,7 @@ RETURNING
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn update<'t>(self, txn: &mut PgTransaction<'t>) -> Result<Option<Self>> {
+    pub async fn update(self, txn: &mut PgTransaction<'_>) -> Result<Option<Self>> {
         let id = if let Some(id) = self.id {
             id
         } else {
@@ -132,7 +129,7 @@ RETURNING
 
     #[tracing::instrument(skip(txn), err)]
     pub async fn get_by_tg_id<'t, S: AsRef<str> + Debug>(
-        txn: &mut PgTransaction<'t>,
+        txn: &mut PgTransaction<'_>,
         tg_id: S,
     ) -> Result<Poll> {
         Ok(sqlx::query_as!(
@@ -156,7 +153,7 @@ WHERE
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn get_pending<'t>(txn: &mut PgTransaction<'t>) -> Result<Vec<Self>> {
+    pub async fn get_pending(txn: &mut PgTransaction<'_>) -> Result<Vec<Self>> {
         Ok(sqlx::query_as!(
             Self,
             r#"
@@ -182,9 +179,66 @@ WHERE
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn published_to_tg<'t>(
+    pub async fn get_pending_for_user(
+        txn: &mut PgTransaction<'_>,
+        user_tg_id: i64,
+        kind: PollKind,
+    ) -> Result<Vec<Self>> {
+        Ok(sqlx::query_as!(
+            Self,
+            r#"
+SELECT
+    id as "id?",
+    polls.tg_id as tg_id,
+    chat_tg_id,
+    kind as "kind: PollKind",
+    publication_date,
+    published
+FROM polls
+JOIN users
+ON
+    polls.chat_tg_id = users.tg_id
+WHERE
+    NOT polls.published
+    AND polls.publication_date < NOW()
+    AND users.active
+    AND users.tg_id = $1
+    AND polls.kind = $2
+            "#,
+            user_tg_id,
+            kind.to_string(),
+        )
+        .fetch_all(txn)
+        .await?)
+    }
+
+    #[tracing::instrument(skip(txn), err)]
+    pub async fn disable_pending_for_user(
+        txn: &mut PgTransaction<'_>,
+        user_tg_id: i64,
+        kind: PollKind,
+    ) -> Result<u64> {
+        Ok(sqlx::query!(
+            r#"
+DELETE FROM polls
+WHERE
+    NOT published
+    AND publication_date > NOW()
+    AND chat_tg_id = $1
+    AND kind = $2
+            "#,
+            user_tg_id,
+            kind.to_string(),
+        )
+        .execute(txn)
+        .await?
+        .rows_affected())
+    }
+
+    #[tracing::instrument(skip(txn), err)]
+    pub async fn published_to_tg(
         mut self,
-        txn: &mut PgTransaction<'t>,
+        txn: &mut PgTransaction<'_>,
         poll_message: Message,
     ) -> Result<Self> {
         // FIXME: do not clone here

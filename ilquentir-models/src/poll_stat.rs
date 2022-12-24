@@ -13,8 +13,8 @@ pub struct PollStat {
 
 impl PollStat {
     #[tracing::instrument(skip(txn), err)]
-    pub async fn get_today_stats<'t>(
-        txn: &mut PgTransaction<'t>,
+    pub async fn get_today_stats(
+        txn: &mut PgTransaction<'_>,
         kind: PollKind,
     ) -> Result<Vec<PollStat>> {
         // TODO: get interval from poll kind

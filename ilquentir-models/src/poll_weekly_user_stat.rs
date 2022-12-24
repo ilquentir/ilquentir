@@ -13,8 +13,8 @@ pub struct PollWeeklyUserStat {
 
 impl PollWeeklyUserStat {
     #[tracing::instrument(skip(txn), err)]
-    pub async fn get_for_last_week<'t>(
-        txn: &mut PgTransaction<'t>,
+    pub async fn get_for_last_week(
+        txn: &mut PgTransaction<'_>,
         kind: PollKind,
         chat_id: i64,
     ) -> Result<Vec<Self>> {
