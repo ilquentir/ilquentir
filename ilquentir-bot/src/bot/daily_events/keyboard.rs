@@ -27,7 +27,7 @@ pub async fn make_keyboard(
         .chain(vec![
             buttons![
                 ["🚫 Ничего из этого", options::NONE_BUTTON],
-                ["✅✅✅ Спрашивать всё", options::ALL_BUTTON]
+                ["✅✅✅ Всё", options::ALL_BUTTON]
             ],
             buttons![["Сохранить выбор", options::DONE_BUTTON]],
         ]);

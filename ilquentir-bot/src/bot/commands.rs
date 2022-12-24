@@ -5,7 +5,7 @@ use teloxide::utils::command::BotCommands;
 pub enum Command {
     #[command(description = "Запустить Ильквентир")]
     Start,
-    #[command(description = "Настроить опрос про ежедневные соббытия")]
+    #[command(description = "Настроить опрос про ежедневные события")]
     DailyEventsSettings,
     #[command(description = "Дай стату")]
     GetStat,
