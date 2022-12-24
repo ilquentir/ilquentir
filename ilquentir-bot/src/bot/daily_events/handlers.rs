@@ -56,7 +56,7 @@ pub async fn handle_callback(
             Poll::get_pending_for_user(&mut *txn, user_tg_id, POLL_KIND).await?;
 
         if pending_daily_events.is_empty() {
-            todo!("schedule polls")
+            // TODO: schedule polls
         }
 
         return Ok(());
