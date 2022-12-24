@@ -1,5 +1,27 @@
 {
   "db": "PostgreSQL",
+  "0772984240d10cf70304e992a1542287b7609dcf36735c5b24b9441a6e110cbe": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Int8",
+          "Text"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    id\nFROM\n    poll_custom_options\nWHERE\n    poll_kind = $1\n    AND user_tg_id = $2\n    AND option_text = $3\n            "
+  },
   "0aa46b7f04ee1dba3c9c2eeb22661003c4d4caa72fc711bf672ad503c2f01c50": {
     "describe": {
       "columns": [
@@ -103,6 +125,19 @@
     },
     "query": "\nINSERT INTO polls (\n    chat_tg_id,\n    kind,\n    publication_date,\n    published\n)\nVALUES ($1, $2, $3, $4)\nRETURNING\n    id as \"id?\",\n    tg_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\n"
   },
+  "12818c8e1c7265ff034a6bef9c0ead32671a713f78222721b3a3e125e9ab370c": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text"
+        ]
+      }
+    },
+    "query": "\nDELETE FROM polls\nWHERE\n    NOT published\n    AND publication_date > NOW()\n    AND chat_tg_id = $1\n    AND kind = $2\n            "
+  },
   "1c3c72718d5686d407ffd03a4de46f7d0188e441f8ea2dd1efe2f48155eff1ce": {
     "describe": {
       "columns": [
@@ -128,33 +163,6 @@
       }
     },
     "query": "\nINSERT INTO users (tg_id, active)\nVALUES ($1, true)\nON CONFLICT (tg_id) DO UPDATE SET active = true\nRETURNING tg_id, active\n            "
-  },
-  "358e11f467b10c383ff57da2e66408645352b23adb2f910e9f645dcc01ae2d9a": {
-    "describe": {
-      "columns": [
-        {
-          "name": "poll_tg_id",
-          "ordinal": 0,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "selected_value",
-          "ordinal": 1,
-          "type_info": "Int4"
-        }
-      ],
-      "nullable": [
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Int4"
-        ]
-      }
-    },
-    "query": "\nINSERT INTO poll_answers (poll_tg_id, selected_value)\nVALUES ($1, $2)\nRETURNING poll_tg_id, selected_value\n                "
   },
   "4458a8af5c385abd3dfc12a5a4ab18d3c2412c027e501e68592cb13df7d8145b": {
     "describe": {
@@ -193,6 +201,53 @@
       }
     },
     "query": "\nSELECT\n    polls.kind as \"kind: PollKind\",\n    DATE(polls.publication_date - interval '12 hours') as \"date!\",\n    selected_value,\n    COUNT(poll_answers.id) as \"n_selected!\"\nFROM poll_answers\nJOIN polls\nON poll_answers.poll_tg_id = polls.tg_id\nWHERE\n    polls.kind = $1\n    AND DATE(polls.publication_date - interval '12 hours') = DATE(NOW() - interval '22 hours')\nGROUP BY\n    selected_value,\n    polls.kind,\n    DATE(polls.publication_date - interval '12 hours')\n            "
+  },
+  "5e7add7bbb7ed38bb558b67151c7c04b6b294e81b79e4c051120983504ecfdf5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "poll_tg_id",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "selected_value",
+          "ordinal": 1,
+          "type_info": "Int4"
+        },
+        {
+          "name": "selected_value_text",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Int4",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\nINSERT INTO poll_answers (poll_tg_id, selected_value, selected_value_text)\nVALUES ($1, $2, $3)\nRETURNING poll_tg_id, selected_value, selected_value_text\n                "
+  },
+  "621944e73127c3ca2305d5cdd58bd93dfa1b4b540135890584e22cd9f0afdcdf": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text"
+        ]
+      }
+    },
+    "query": "\nDELETE FROM poll_custom_options\nWHERE\n    user_tg_id = $1\n    AND poll_kind = $2\n            "
   },
   "675d99ce9db8d89d365a4cea9320d7084a62664ff98f8ab46a96f1b7b0dbf245": {
     "describe": {
@@ -241,6 +296,78 @@
       }
     },
     "query": "\nSELECT\n    id as \"id?\",\n    polls.tg_id as tg_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nJOIN users\nON\n    polls.chat_tg_id = users.tg_id\nWHERE\n    NOT polls.published\n    AND polls.publication_date < NOW()\n    AND users.active\n            "
+  },
+  "70e7ef2b9b06a19a7a3baf034724062e586ced6ccd3dad617a223aaeb82dece9": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id?",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "tg_id",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "chat_tg_id",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "kind: PollKind",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "publication_date",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "published",
+          "ordinal": 5,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    id as \"id?\",\n    polls.tg_id as tg_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nJOIN users\nON\n    polls.chat_tg_id = users.tg_id\nWHERE\n    NOT polls.published\n    AND polls.publication_date < NOW()\n    AND users.active\n    AND users.tg_id = $1\n    AND polls.kind = $2\n            "
+  },
+  "81f1b8b82fa8aed4854f6fa5f08dc0ded0ae700d141147e61752c62d726b14e9": {
+    "describe": {
+      "columns": [
+        {
+          "name": "option_text",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    option_text\nFROM\n    poll_custom_options\nWHERE\n    user_tg_id = $1\n    AND poll_kind = $2\n            "
   },
   "9c71504b0686d369691963a15c574ee07a1ef5037c4ac13e0b1974f6c43db14a": {
     "describe": {
@@ -343,6 +470,20 @@
     },
     "query": "\nUPDATE polls\nSET\n    tg_id = $2,\n    chat_tg_id = $3,\n    kind = $4,\n    publication_date = $5,\n    published = $6\nWHERE id = $1\nRETURNING\n    id as \"id?\",\n    tg_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\n            "
   },
+  "cb0fad5bbd847594176f786c6c69d3b6eae5899359552c9981923bf43b7e3106": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Int8",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\nINSERT INTO poll_custom_options (\n    poll_kind, user_tg_id, option_text\n)\nVALUES ($1, $2, $3)\n                "
+  },
   "d60fbc223d7d94521aeca70d231404519e57543a98a2a6896ccdbf0605167f63": {
     "describe": {
       "columns": [
@@ -366,6 +507,20 @@
       }
     },
     "query": "\nSELECT tg_id, active\nFROM users\nWHERE active\n            "
+  },
+  "d937c18010f9c89a2cadd205701267af1aaa2b00d6f3c49a2359547a666f6141": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Int8",
+          "Text"
+        ]
+      }
+    },
+    "query": "\nDELETE FROM poll_custom_options\nWHERE\n    poll_kind = $1\n    AND user_tg_id = $2\n    AND option_text = $3\n                "
   },
   "dae6e58fb74c36560936d2b11a8de0680c5c8af0b2e86d7a098321bee9d2efec": {
     "describe": {
