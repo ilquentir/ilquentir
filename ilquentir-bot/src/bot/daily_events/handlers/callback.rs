@@ -27,10 +27,9 @@ pub async fn handle_callback(
         .message
         .as_ref()
         .ok_or_else(|| eyre!("payload with no message"))?;
+    let current = PollCustomOptions::get_for_user(&mut *txn, user_tg_id, DAILY_EVENTS).await?;
 
     if options::DONE_BUTTON.matches(payload) {
-        let current = PollCustomOptions::get_for_user(&mut *txn, user_tg_id, DAILY_EVENTS).await?;
-
         if current.options.is_empty() {
             Poll::disable_pending_for_user(&mut *txn, user_tg_id, DAILY_EVENTS).await?;
 
@@ -66,8 +65,6 @@ pub async fn handle_callback(
     }
 
     if options::ALL_BUTTON.matches(payload) {
-        let current = PollCustomOptions::get_for_user(&mut *txn, user_tg_id, DAILY_EVENTS).await?;
-
         let to_update: Vec<_> = options::ALL_OPTIONS
             .values()
             .filter(|o| !current.options.contains(o.value()))
@@ -84,6 +81,10 @@ pub async fn handle_callback(
                 .await?;
         }
     } else if options::NONE_BUTTON.matches(payload) {
+        if current.options.is_empty() {
+            return Ok(());
+        }
+
         PollCustomOptions::clear_user_options(txn, user_tg_id, DAILY_EVENTS).await?;
     } else if let Some(option) = options::ALL_OPTIONS.values().find(|o| o.matches(payload)) {
         PollCustomOptions::toggle_option(&mut *txn, user_tg_id, DAILY_EVENTS, option.value())

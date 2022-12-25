@@ -40,22 +40,26 @@ pub async fn send_poll<'t>(
 
     let options = poll.kind.options(txn, poll.chat_tg_id).await?;
 
-    let sent_messages = futures::future::join_all(options.chunks(TELEGRAM_POLL_OPTIONS_LIMIT).map(
-        |options_chunk| async {
+    let mut chunk_size = TELEGRAM_POLL_OPTIONS_LIMIT;
+    while options.len() % chunk_size == 1 && chunk_size > 1 {
+        chunk_size -= 1;
+    }
+
+    let mut sent_messages = vec![];
+
+    for options_chunk in options.chunks(chunk_size) {
+        sent_messages.push(
             bot.send_poll(
                 poll.chat_tg_id.to_string(),
                 poll.kind.question(),
                 options_chunk.iter().cloned(),
             )
             .allows_multiple_answers(poll.kind.allows_multiple_answers())
-            .await
-        },
-    ))
-    .await;
+            .await?
+        );
+    }
 
     info!(poll_id = poll.id, "poll sent");
 
-    Ok(sent_messages
-        .into_iter()
-        .collect::<std::result::Result<Vec<_>, _>>()?)
+    Ok(sent_messages)
 }
