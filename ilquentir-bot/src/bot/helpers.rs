@@ -31,14 +31,14 @@ pub async fn set_typing(
 }
 
 #[tracing::instrument(skip(bot), err)]
-pub async fn send_poll<'t>(
+pub async fn send_poll(
     bot: &Bot,
-    txn: &mut PgTransaction<'t>,
-    poll: &Poll,
+    txn: &mut PgTransaction<'_>,
+    poll: Poll,
 ) -> Result<Vec<Message>> {
     info!(poll_id = poll.id, "sending poll");
 
-    let options = poll.kind.options(txn, poll.chat_tg_id).await?;
+    let options = poll.kind.options(&mut *txn, poll.chat_tg_id).await?;
 
     let mut chunk_size = TELEGRAM_POLL_OPTIONS_LIMIT;
     while options.len() % chunk_size == 1 && chunk_size > 1 {
@@ -60,6 +60,8 @@ pub async fn send_poll<'t>(
     }
 
     info!(poll_id = poll.id, "poll sent");
+
+    poll.published_to_tg(&mut *txn, &sent_messages).await?;
 
     Ok(sent_messages)
 }

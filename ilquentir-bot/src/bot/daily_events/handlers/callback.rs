@@ -57,8 +57,7 @@ pub async fn handle_callback(
 
         if pending_daily_events_polls.is_empty() {
             let poll = Poll::create(&mut *txn, user_tg_id, DAILY_EVENTS, None).await?;
-            let messages = send_poll(bot, &mut *txn, &poll).await?;
-            poll.published_to_tg(&mut *txn, messages).await?;
+            send_poll(bot, &mut *txn, poll).await?;
         }
 
         return Ok(());

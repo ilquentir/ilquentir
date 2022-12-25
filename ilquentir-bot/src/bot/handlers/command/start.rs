@@ -66,9 +66,7 @@ pub async fn handle_start(bot: &Bot, txn: &mut PgTransaction<'_>, chat_id: ChatI
     set_typing(bot, chat_id, Some(Duration::from_millis(500))).await?;
 
     for poll in polls {
-        let poll_message = send_poll(bot, &mut *txn, &poll).await?;
-
-        poll.published_to_tg(&mut *txn, poll_message).await?;
+        send_poll(bot, &mut *txn, poll).await?;
     }
 
     info!(

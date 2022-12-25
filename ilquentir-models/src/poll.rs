@@ -195,13 +195,11 @@ WHERE
     NOT polls.published
     AND polls.publication_date < NOW()
     AND users.active
-ORDER BY
-    polls.chat_tg_id
             "#
         )
         .fetch_all(txn)
         .await?;
-        polls.sort_by_key(|poll| (poll.chat_tg_id, poll.kind));
+        polls.sort_unstable_by_key(|poll| poll.kind);
 
         Ok(polls)
     }
@@ -269,13 +267,11 @@ WHERE
     pub async fn published_to_tg(
         self,
         txn: &mut PgTransaction<'_>,
-        poll_messages: Vec<Message>,
+        poll_messages: &[Message],
     ) -> Result<Self> {
         // schedule new poll
         let prev_id = self.id;
         let mut poll = self;
-
-        dbg!(poll_messages.len());
 
         for message in poll_messages {
             // FIXME: do not clone here
