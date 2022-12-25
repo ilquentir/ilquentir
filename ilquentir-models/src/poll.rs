@@ -2,6 +2,7 @@ use std::fmt::Debug;
 
 use color_eyre::Result;
 use sqlx::FromRow;
+use time::OffsetDateTime;
 use tracing::{debug, error, info};
 
 use teloxide::types::{MediaKind, Message, MessageKind};
@@ -19,14 +20,33 @@ pub struct Poll {
 }
 
 impl Poll {
-    #[tracing::instrument(err)]
+    #[tracing::instrument(skip(txn), err)]
+    pub async fn create(
+        txn: &mut PgTransaction<'_>,
+        user_tg_id: i64,
+        kind: PollKind,
+        publication_date: Option<OffsetDateTime>,
+    ) -> Result<Self> {
+        Self {
+            id: None,
+            tg_id: None,
+            chat_tg_id: user_tg_id,
+            kind,
+            publication_date: publication_date.unwrap_or_else(OffsetDateTime::now_utc),
+            published: false,
+        }
+        .insert(txn)
+        .await
+    }
+
+    #[tracing::instrument(skip(txn), err)]
     pub async fn create_for_user(txn: &mut PgTransaction<'_>, user: &'_ User) -> Result<Vec<Self>> {
         let publication_date = time::OffsetDateTime::now_utc();
 
         let polls = user
             .subscribed_for_polls()
             .into_iter()
-            .map(|kind| Poll {
+            .map(|kind| Self {
                 id: None,
                 tg_id: None,
                 chat_tg_id: user.tg_id,
@@ -52,11 +72,12 @@ impl Poll {
             r#"
 INSERT INTO polls (
     chat_tg_id,
+    tg_id,
     kind,
     publication_date,
     published
 )
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING
     id as "id?",
     tg_id,
@@ -66,6 +87,7 @@ RETURNING
     published
 "#,
             self.chat_tg_id,
+            self.tg_id,
             self.kind.to_string(),
             self.publication_date,
             self.published,
@@ -80,6 +102,7 @@ RETURNING
         let poll = Self {
             publication_date: next_at,
             published: false,
+            tg_id: None,
             ..self
         };
 
@@ -154,7 +177,7 @@ WHERE
 
     #[tracing::instrument(skip(txn), err)]
     pub async fn get_pending(txn: &mut PgTransaction<'_>) -> Result<Vec<Self>> {
-        Ok(sqlx::query_as!(
+        let mut polls = sqlx::query_as!(
             Self,
             r#"
 SELECT
@@ -172,14 +195,19 @@ WHERE
     NOT polls.published
     AND polls.publication_date < NOW()
     AND users.active
+ORDER BY
+    polls.chat_tg_id
             "#
         )
         .fetch_all(txn)
-        .await?)
+        .await?;
+        polls.sort_by_key(|poll| (poll.chat_tg_id, poll.kind));
+
+        Ok(polls)
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn get_pending_for_user(
+    pub async fn get_scheduled_for_user(
         txn: &mut PgTransaction<'_>,
         user_tg_id: i64,
         kind: PollKind,
@@ -200,10 +228,12 @@ ON
     polls.chat_tg_id = users.tg_id
 WHERE
     NOT polls.published
-    AND polls.publication_date < NOW()
+    AND polls.publication_date > NOW()
     AND users.active
     AND users.tg_id = $1
     AND polls.kind = $2
+ORDER BY
+    polls.chat_tg_id
             "#,
             user_tg_id,
             kind.to_string(),
@@ -237,52 +267,64 @@ WHERE
 
     #[tracing::instrument(skip(txn), err)]
     pub async fn published_to_tg(
-        mut self,
+        self,
         txn: &mut PgTransaction<'_>,
-        poll_message: Message,
+        poll_messages: Vec<Message>,
     ) -> Result<Self> {
-        // FIXME: do not clone here
-        if let MessageKind::Common(message) = poll_message.kind.clone() {
-            if let MediaKind::Poll(tg_poll) = message.media_kind {
-                debug!(
-                    poll_id = self.id,
-                    user_id = self.chat_tg_id,
-                    poll_tg_id = tg_poll.poll.id,
-                    "poll sent"
-                );
+        // schedule new poll
+        let prev_id = self.id;
+        let mut poll = self;
 
-                // TODO: think about refactoring in two methods
-                // save that poll is published
-                self.published = true;
-                self.tg_id = Some(tg_poll.poll.id.clone());
-                let poll = self.update(&mut *txn).await?.expect("post update failed");
-                debug!(
-                    poll_id = poll.id,
-                    user_id = poll.chat_tg_id,
-                    poll_tg_id = tg_poll.poll.id,
-                    "saved that poll is published"
-                );
+        dbg!(poll_messages.len());
 
-                // schedule new poll
-                let prev_id = poll.id;
-                let next_poll = poll.schedule_next(&mut *txn).await?;
-                info!(
-                    poll_id = prev_id,
-                    next_poll_id = next_poll.id,
-                    user_id = next_poll.chat_tg_id,
-                    "scheduled new poll"
-                );
+        for message in poll_messages {
+            // FIXME: do not clone here
+            if let MessageKind::Common(message) = message.kind.clone() {
+                if let MediaKind::Poll(tg_poll) = message.media_kind {
+                    debug!(
+                        poll_id = prev_id,
+                        user_id = poll.chat_tg_id,
+                        poll_tg_id = tg_poll.poll.id,
+                        "poll sent"
+                    );
 
-                return Ok(next_poll);
+                    // TODO: think about refactoring in two methods
+                    // save that poll is published
+                    poll.published = true;
+                    poll.tg_id = Some(tg_poll.poll.id.clone());
+                    if poll.id.is_some() {
+                        poll = poll.update(&mut *txn).await?.expect("post update failed");
+                    } else {
+                        poll = poll.insert(&mut *txn).await?;
+                    }
+                    poll.id = None;
+
+                    debug!(
+                        poll_id = poll.id,
+                        user_id = poll.chat_tg_id,
+                        poll_tg_id = tg_poll.poll.id,
+                        "saved that poll is published"
+                    );
+                }
+            } else {
+                error!(
+                    ?message,
+                    "got some weird message in response to SendPoll request"
+                );
+                return Err(color_eyre::eyre::eyre!(
+                    "got some weird message in response to SendPoll request"
+                ));
             }
         }
 
-        error!(
-            ?poll_message,
-            "got some weird message in response to SendPoll request"
+        let next_poll = poll.schedule_next(&mut *txn).await?;
+        info!(
+            poll_id = prev_id,
+            next_poll_id = next_poll.id,
+            user_id = next_poll.chat_tg_id,
+            "scheduled new poll"
         );
-        Err(color_eyre::eyre::eyre!(
-            "got some weird message in response to SendPoll request"
-        ))
+
+        Ok(next_poll)
     }
 }

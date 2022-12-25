@@ -1,29 +1,19 @@
 use std::sync::Arc;
 
-use color_eyre::Result;
-use giphy::v1::{
-    gifs::RandomRequest,
-    r#async::{AsyncApi, RunnableAsyncRequest},
-};
-use reqwest::Client;
+use color_eyre::{eyre::eyre, Result};
+use giphy_api::Client;
 
 /// Giphy API wrapper
 #[derive(Clone)]
 pub struct GiphyApi {
-    api: Arc<AsyncApi>,
+    api: Arc<Client>,
 }
 
 impl GiphyApi {
     pub fn new(api_key: &str) -> Result<Self> {
-        let client = Client::builder()
-            .user_agent(concat!(
-                env!("CARGO_PKG_NAME"),
-                "/",
-                env!("CARGO_PKG_VERSION"),
-            ))
-            .build()?;
+        let client = Client::new(api_key);
 
-        let api = Arc::new(AsyncApi::new(api_key.to_owned(), client));
+        let api = Arc::new(client);
 
         Ok(Self { api })
     }
@@ -32,14 +22,18 @@ impl GiphyApi {
     pub async fn get_random_cat_gif(&self) -> Result<url::Url> {
         const CAT_QUERY: &str = "cute cat";
 
-        Ok(RandomRequest::new()
-            .with_tag(CAT_QUERY)
-            .send_to(&self.api)
-            .await?
+        Ok(self
+            .api
+            .gifs()
+            .random(CAT_QUERY, "PG")
+            .await
+            .map_err(|e| eyre!("failed to get GIF: {e:?}"))?
             .data
-            .images
-            .looping
-            .mp4
+            .and_then(|gif| {
+                gif.images
+                    .and_then(|images| images.looping.map(|looping| looping.image.mp_4))
+            })
+            .ok_or_else(|| eyre!("no looping image in response"))?
             .parse()?)
     }
 }

@@ -60,16 +60,27 @@ RETURNING tg_id, active
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn count_answered_polls(txn: &mut PgTransaction<'_>, user_id: i64) -> Result<i64> {
+    pub async fn count_answered_polls(
+        txn: &mut PgTransaction<'_>,
+        user_id: i64,
+        kind: PollKind,
+    ) -> Result<i64> {
         Ok(sqlx::query!(
             r#"
-SELECT COUNT(DISTINCT poll.tg_id) as "n_answered!"
-FROM polls AS poll
-JOIN poll_answers AS answer
-ON poll.tg_id = answer.poll_tg_id
-WHERE poll.chat_tg_id = $1
+SELECT
+    COUNT(DISTINCT poll.tg_id) as "n_answered!"
+FROM
+    polls AS poll
+JOIN
+    poll_answers AS answer
+ON
+    poll.tg_id = answer.poll_tg_id
+WHERE
+    poll.chat_tg_id = $1
+    AND poll.kind = $2
             "#,
             user_id,
+            kind.to_string(),
         )
         .fetch_one(txn)
         .await?

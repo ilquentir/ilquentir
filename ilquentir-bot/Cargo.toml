@@ -17,9 +17,11 @@ ilquentir-models = { path = "../ilquentir-models" }
 # generic dependencies
 color-eyre = { workspace = true }
 dotenvy = { workspace = true }
+futures = { workspace = true }
 once_cell = { workspace = true }
 rand = { workspace = true }
 serde = { workspace = true }
+strum = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true }
 

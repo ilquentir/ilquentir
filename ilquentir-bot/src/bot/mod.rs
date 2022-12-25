@@ -19,6 +19,7 @@ pub mod handlers;
 pub mod helpers;
 
 mod daily_events;
+mod how_was_your_day;
 
 use self::{
     commands::Command,

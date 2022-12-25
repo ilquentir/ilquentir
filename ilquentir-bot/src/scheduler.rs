@@ -3,7 +3,7 @@ use std::sync::{atomic::AtomicBool, Arc};
 use color_eyre::Result;
 use sqlx::PgPool;
 use teloxide::dispatching::ShutdownToken as DispatcherShutdownToken;
-use tokio::time::interval;
+use tokio::time::{interval, MissedTickBehavior};
 use tracing::{error, info};
 
 use ilquentir_config::Config;
@@ -46,6 +46,7 @@ impl Scheduler {
             .store(true, std::sync::atomic::Ordering::Release);
 
         let mut interval = interval(config.scheduler_interval);
+        interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
 
         loop {
             interval.tick().await;

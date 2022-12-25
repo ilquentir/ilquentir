@@ -35,7 +35,7 @@ WHERE
     AND poll_kind = $2
             "#,
             user_tg_id,
-            poll_kind.to_string()
+            poll_kind.to_string(),
         )
         .fetch_all(txn)
         .await?

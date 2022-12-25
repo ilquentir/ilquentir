@@ -1,30 +1,20 @@
 use color_eyre::Result;
-
 use time::{macros::time, Duration, OffsetDateTime, Time};
 use tracing::error;
 
 use crate::{PgTransaction, PollCustomOptions};
 
 /// Describes possible kind of polls
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, strum::Display)]
 #[sqlx(rename_all = "snake_case")]
+#[strum(serialize_all = "snake_case")]
 pub enum PollKind {
     /// Ask user, how was his day
     HowWasYourDay,
     /// Was there any
     FoodAllergy,
-    ///
+    /// Ask user about events that happened to him during his day
     DailyEvents,
-}
-
-impl ToString for PollKind {
-    fn to_string(&self) -> String {
-        match self {
-            Self::HowWasYourDay => "how_was_your_day".to_owned(),
-            Self::DailyEvents => "daily_events".to_owned(),
-            Self::FoodAllergy => "food_allergy".to_owned(),
-        }
-    }
 }
 
 impl PollKind {
@@ -77,7 +67,7 @@ impl PollKind {
             Self::FoodAllergy => {
                 "Had you encountered any of described feelings after the meal today?"
             }
-            Self::DailyEvents => "Отметь, что сегодня происходило:",
+            Self::DailyEvents => "Что было сегодня?",
         }
         .to_owned()
     }
@@ -111,7 +101,7 @@ impl PollKind {
                 .map(|&option| option.to_string())
                 .collect(),
             Self::DailyEvents => {
-                PollCustomOptions::get_for_user(txn, user_tg_id, self)
+                PollCustomOptions::get_for_user(txn, user_tg_id, Self::DailyEvents)
                     .await?
                     .options
             }
@@ -127,7 +117,7 @@ mod tests {
 
     #[test]
     fn test_ord() {
-        assert!(PollKind::HowWasYourDay < PollKind::HowWasYourDay);
+        assert!(PollKind::HowWasYourDay < PollKind::DailyEvents);
     }
 
     #[test]

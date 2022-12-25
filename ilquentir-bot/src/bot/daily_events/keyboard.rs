@@ -3,7 +3,7 @@ use teloxide::types::InlineKeyboardMarkup;
 
 use ilquentir_models::{PgTransaction, PollCustomOptions, PollKind};
 
-use crate::bot::callbacks::buttons;
+use crate::bot::callbacks::buttons_row;
 
 use super::options;
 
@@ -15,7 +15,7 @@ const ENABLED: char = '✅';
 const DISABLED: char = '⬜';
 
 #[tracing::instrument(skip(txn), err)]
-pub async fn make_keyboard(
+pub async fn user_daily_options_keyboard(
     txn: &mut PgTransaction<'_>,
     chat_id: i64,
 ) -> Result<InlineKeyboardMarkup> {
@@ -23,23 +23,21 @@ pub async fn make_keyboard(
     let rendered_options = options::ALL_OPTIONS
         .values()
         .map(|data| (data, current.options.contains(&data.value)))
-        .map(|(data, enabled)| buttons![[format_option(data.value(), enabled), data]])
-        .chain(vec![
-            buttons![
+        .map(|(data, enabled)| buttons_row![[format_option(data.value(), enabled), data]])
+        .chain([
+            buttons_row![
                 ["🚫 Ничего из этого", options::NONE_BUTTON],
                 ["✅✅✅ Всё", options::ALL_BUTTON]
             ],
-            buttons![["Сохранить выбор", options::DONE_BUTTON]],
+            buttons_row![["Сохранить выбор", options::DONE_BUTTON]],
         ]);
 
     Ok(InlineKeyboardMarkup::new(rendered_options))
 }
 
-pub fn make_promo_keyboard() -> InlineKeyboardMarkup {
-    InlineKeyboardMarkup::new([
-        buttons![
-            ["Да", options::PROMO_YES_BUTTON],
-            ["Нет", options::PROMO_NO_BUTTON]
-        ]
-    ])
+pub fn promo_keyboard() -> InlineKeyboardMarkup {
+    InlineKeyboardMarkup::new([buttons_row![
+        ["Да", options::PROMO_YES_BUTTON],
+        ["Нет", options::PROMO_NO_BUTTON]
+    ]])
 }

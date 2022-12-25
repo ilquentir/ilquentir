@@ -1,7 +1,8 @@
 use indexmap::IndexMap;
 use teloxide::types::InlineKeyboardButton;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, strum::EnumString, strum::IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
 pub enum Scope {
     DailyEvents,
     PromoDailyEvents,
@@ -10,12 +11,13 @@ pub enum Scope {
 impl Scope {
     pub fn to_str(self) -> &'static str {
         match self {
-            Self::DailyEvents => "daily_events",
             Self::PromoDailyEvents => "promo_daily",
+            _ => self.into(),
         }
     }
 
     pub fn from_payload(data: &str) -> Option<Self> {
+        // TODO: use strum parsing
         match data.split_once(':')?.0 {
             "daily_events" => Some(Self::DailyEvents),
             "promo_daily" => Some(Self::PromoDailyEvents),
@@ -78,11 +80,11 @@ pub(super) fn format_payload(hash: u128, scope: Scope) -> String {
     res
 }
 
-macro_rules! buttons {
+macro_rules! buttons_row {
     [$([$text:expr, $data:expr]),*] => {
         vec![$($data.create_button($text), )*]
     };
 }
 
-pub(super) use buttons;
+pub(super) use buttons_row;
 use tracing::warn;

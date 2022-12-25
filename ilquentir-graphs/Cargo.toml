@@ -10,7 +10,6 @@ edition = "2021"
 ilquentir-models = { path = "../ilquentir-models" }
 
 color-eyre = { workspace = true }
-indoc = { workspace = true }
 time = { workspace = true }
 
 regex = "1"
