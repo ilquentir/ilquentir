@@ -9,7 +9,7 @@ use ilquentir_graphs::{daily::chart_daily_stats, weekly::personal_weekly_stat};
 use ilquentir_messages::md_message;
 use ilquentir_models::{Poll, PollKind, PollStat, PollWeeklyUserStat};
 
-use crate::bot::{daily_events::keyboard::promo_keyboard, helpers::set_typing, Bot};
+use crate::bot::{daily_events, helpers::set_typing, Bot};
 
 #[tracing::instrument(skip(bot, pool, config), err)]
 pub async fn poll_answered(bot: &Bot, pool: &PgPool, poll: &Poll, config: Config) -> Result<()> {
@@ -20,11 +20,11 @@ pub async fn poll_answered(bot: &Bot, pool: &PgPool, poll: &Poll, config: Config
     let bot_clone = bot.clone();
     let pool_clone = pool.clone();
     tokio::spawn(async move {
-        let delay = publication_date + config.min_reply_delay - time::OffsetDateTime::now_utc();
+        let delay = publication_date + config.reply_delay - time::OffsetDateTime::now_utc();
         if delay.is_positive() {
             tokio::time::sleep(delay.unsigned_abs()).await;
         } else {
-            tokio::time::sleep(Duration::from_secs(1)).await;
+            tokio::time::sleep(config.min_reply_delay).await;
         }
 
         let stats = PollStat::get_today_stats(&mut pool_clone.begin().await.unwrap(), kind)
@@ -63,10 +63,10 @@ pub async fn poll_answered(bot: &Bot, pool: &PgPool, poll: &Poll, config: Config
         .await?
         .is_empty()
     {
-        set_typing(bot, chat_id.to_string(), Some(Duration::from_secs(2))).await?;
+        set_typing(bot, chat_id.to_string(), Some(Duration::from_millis(1500))).await?;
 
         bot.send_message(chat_id.to_string(), md_message!("daily_events/promo.md"))
-            .reply_markup(promo_keyboard())
+            .reply_markup(daily_events::keyboard::promo())
             .await?;
     }
 

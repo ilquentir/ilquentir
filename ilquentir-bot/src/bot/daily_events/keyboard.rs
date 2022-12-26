@@ -15,7 +15,7 @@ const ENABLED: char = '✅';
 const DISABLED: char = '⬜';
 
 #[tracing::instrument(skip(txn), err)]
-pub async fn user_daily_options_keyboard(
+pub async fn user_daily_options(
     txn: &mut PgTransaction<'_>,
     chat_id: i64,
 ) -> Result<InlineKeyboardMarkup> {
@@ -35,7 +35,7 @@ pub async fn user_daily_options_keyboard(
     Ok(InlineKeyboardMarkup::new(rendered_options))
 }
 
-pub fn promo_keyboard() -> InlineKeyboardMarkup {
+pub fn promo() -> InlineKeyboardMarkup {
     InlineKeyboardMarkup::new([buttons_row![
         ["Да", options::PROMO_YES_BUTTON],
         ["Нет", options::PROMO_NO_BUTTON]

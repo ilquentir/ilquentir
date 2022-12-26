@@ -35,7 +35,14 @@ pub struct ConfigInner {
     /// Scheduler interval: how long should pauses be between updates
     #[serde(with = "humantime_serde")]
     pub scheduler_interval: Duration,
-    /// Minimal response delay for today's summary
+    /// Response delay for today's summary
     #[serde(with = "humantime_serde")]
+    pub reply_delay: Duration,
+    /// Minimal response delay for today's summary
+    #[serde(with = "humantime_serde", default="default_min_reply_delay")]
     pub min_reply_delay: Duration,
+}
+
+fn default_min_reply_delay() -> Duration {
+    Duration::from_secs(60 * 3)
 }

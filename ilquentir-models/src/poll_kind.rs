@@ -101,9 +101,14 @@ impl PollKind {
                 .map(|&option| option.to_string())
                 .collect(),
             Self::DailyEvents => {
-                PollCustomOptions::get_for_user(txn, user_tg_id, Self::DailyEvents)
+                const NOTHING_OPTION: &str = "Ничего";
+
+                let mut chosen = PollCustomOptions::get_for_user(txn, user_tg_id, Self::DailyEvents)
                     .await?
-                    .options
+                    .options;
+                chosen.push(NOTHING_OPTION.to_owned());
+
+                chosen
             }
         })
     }

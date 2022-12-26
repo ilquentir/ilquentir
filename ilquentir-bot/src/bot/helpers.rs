@@ -31,11 +31,7 @@ pub async fn set_typing(
 }
 
 #[tracing::instrument(skip(bot), err)]
-pub async fn send_poll(
-    bot: &Bot,
-    txn: &mut PgTransaction<'_>,
-    poll: Poll,
-) -> Result<Vec<Message>> {
+pub async fn send_poll(bot: &Bot, txn: &mut PgTransaction<'_>, poll: Poll) -> Result<Vec<Message>> {
     info!(poll_id = poll.id, "sending poll");
 
     let options = poll.kind.options(&mut *txn, poll.chat_tg_id).await?;
@@ -55,7 +51,7 @@ pub async fn send_poll(
                 options_chunk.iter().cloned(),
             )
             .allows_multiple_answers(poll.kind.allows_multiple_answers())
-            .await?
+            .await?,
         );
     }
 

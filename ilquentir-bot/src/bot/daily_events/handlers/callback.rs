@@ -11,7 +11,7 @@ use ilquentir_models::{PgTransaction, Poll, PollCustomOptions, PollKind};
 
 use crate::bot::{helpers::send_poll, Bot};
 
-use super::super::{keyboard::user_daily_options_keyboard, options};
+use super::super::{keyboard::user_daily_options, options};
 
 #[tracing::instrument(skip(bot, txn), err)]
 pub async fn handle_callback(
@@ -92,7 +92,7 @@ pub async fn handle_callback(
         warn!("got unknown payload");
     }
 
-    let keyboard = user_daily_options_keyboard(txn, user_tg_id).await?;
+    let keyboard = user_daily_options(txn, user_tg_id).await?;
 
     bot.edit_message_reply_markup(user_tg_id.to_string(), message.id)
         .reply_markup(keyboard)
@@ -123,7 +123,7 @@ pub async fn handle_promo_callback(
         )
         .await?;
     } else if options::PROMO_YES_BUTTON.matches(payload) {
-        let keyboard = user_daily_options_keyboard(txn, user_tg_id).await?;
+        let keyboard = user_daily_options(txn, user_tg_id).await?;
 
         bot.send_message(
             user_tg_id.to_string(),
