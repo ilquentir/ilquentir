@@ -8,7 +8,7 @@ use super::super::keyboard::user_daily_options;
 
 use crate::bot::Bot;
 
-#[tracing::instrument(skip(bot, txn), err)]
+#[tracing::instrument(skip(bot, txn), fields(chat_id=chat_id.0), err)]
 pub async fn handle_settings_command(
     bot: &Bot,
     txn: &mut PgTransaction<'_>,

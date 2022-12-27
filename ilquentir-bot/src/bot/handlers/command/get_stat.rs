@@ -7,7 +7,7 @@ use ilquentir_models::{PgTransaction, PollKind, PollStat, PollWeeklyUserStat};
 
 use crate::bot::Bot;
 
-#[tracing::instrument(skip(bot, txn), err)]
+#[tracing::instrument(skip(bot, txn, chat_id), fields(chat_id=chat_id.0), err)]
 pub async fn handle_get_stat(
     bot: &Bot,
     txn: &mut PgTransaction<'_>,
