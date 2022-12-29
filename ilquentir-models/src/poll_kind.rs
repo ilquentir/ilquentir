@@ -86,9 +86,9 @@ impl PollKind {
     /// to discount it as obsolete
     pub fn overdue_interval(self) -> Duration {
         match self {
-            Self::HowWasYourDay => 2.days(),
-            Self::DailyEvents => 2.days(),
-            Self::FoodAllergy => 1.days(),
+            Self::HowWasYourDay => (2 * 24 - 1).hours(),
+            Self::DailyEvents => (2 * 24 - 1).hours(),
+            Self::FoodAllergy => 23.hours(),
         }
     }
 
