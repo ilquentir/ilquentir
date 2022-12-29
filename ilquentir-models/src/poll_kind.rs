@@ -1,11 +1,13 @@
 use color_eyre::Result;
-use time::{macros::time, Duration, OffsetDateTime, Time};
+use time::{ext::NumericalDuration, macros::time, Duration, OffsetDateTime, Time};
 use tracing::error;
 
 use crate::{PgTransaction, PollCustomOptions};
 
 /// Describes possible kind of polls
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, strum::Display)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, strum::EnumIter, strum::Display,
+)]
 #[sqlx(rename_all = "snake_case")]
 #[strum(serialize_all = "snake_case")]
 pub enum PollKind {
@@ -80,7 +82,17 @@ impl PollKind {
         }
     }
 
-    #[tracing::instrument]
+    /// How much time must pass after its publication
+    /// to discount it as obsolete
+    pub fn overdue_interval(self) -> Duration {
+        match self {
+            Self::HowWasYourDay => 2.days(),
+            Self::DailyEvents => 2.days(),
+            Self::FoodAllergy => 1.days(),
+        }
+    }
+
+    #[tracing::instrument(skip(txn), err)]
     pub async fn options(
         self,
         txn: &mut PgTransaction<'_>,
@@ -103,9 +115,10 @@ impl PollKind {
             Self::DailyEvents => {
                 const NOTHING_OPTION: &str = "Ничего";
 
-                let mut chosen = PollCustomOptions::get_for_user(txn, user_tg_id, Self::DailyEvents)
-                    .await?
-                    .options;
+                let mut chosen =
+                    PollCustomOptions::get_for_user(txn, user_tg_id, Self::DailyEvents)
+                        .await?
+                        .options;
                 chosen.push(NOTHING_OPTION.to_owned());
 
                 chosen

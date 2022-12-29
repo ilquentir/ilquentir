@@ -39,7 +39,7 @@ pub struct ConfigInner {
     #[serde(with = "humantime_serde")]
     pub reply_delay: Duration,
     /// Minimal response delay for today's summary
-    #[serde(with = "humantime_serde", default="default_min_reply_delay")]
+    #[serde(with = "humantime_serde", default = "default_min_reply_delay")]
     pub min_reply_delay: Duration,
 }
 

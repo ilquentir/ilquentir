@@ -2,17 +2,22 @@ use std::sync::{atomic::AtomicBool, Arc};
 
 use color_eyre::Result;
 use sqlx::PgPool;
+use strum::IntoEnumIterator;
 use teloxide::dispatching::ShutdownToken as DispatcherShutdownToken;
 use tokio::time::{interval, MissedTickBehavior};
 use tracing::{error, info};
 
 use ilquentir_config::Config;
-use ilquentir_models::Poll;
+use ilquentir_models::{Poll, PollKind};
 
-use crate::bot::{helpers::send_poll, Bot, Dispatcher};
+use crate::bot::{
+    helpers::{overdue_poll, send_poll},
+    Bot, Dispatcher,
+};
 
 #[derive(Clone)]
 pub struct Scheduler {
+    #[allow(dead_code)]
     dispatcher_shutdown_token: DispatcherShutdownToken,
     running: Arc<AtomicBool>,
 }
@@ -50,19 +55,14 @@ impl Scheduler {
 
         loop {
             interval.tick().await;
-            let schedule_result = handle_scheduled(bot, pool).await;
+            let send_result = handle_scheduled_delivery(bot, pool).await;
+            if let Err(e) = send_result {
+                error!(error = %e, "got an error while sending");
+            };
 
-            if let Err(e) = schedule_result {
-                error!(error = %e, "got an error while scheduling");
-
-                info!("shutting down scheduler");
-                self.shutdown_token().shutdown();
-
-                info!("shutting down dispatcher");
-                self.dispatcher_shutdown_token.shutdown()?.await;
-                info!("dispatcher has been shut down");
-
-                return Err(e);
+            let overdue_result = handle_scheduled_overdue(bot, pool).await;
+            if let Err(e) = overdue_result {
+                error!(error = %e, "got an error while processing overdue");
             };
 
             if !self.running() {
@@ -80,7 +80,7 @@ impl Scheduler {
 }
 
 #[tracing::instrument(skip_all, err)]
-pub async fn handle_scheduled(bot: &Bot, pool: &PgPool) -> Result<()> {
+pub async fn handle_scheduled_delivery(bot: &Bot, pool: &PgPool) -> Result<()> {
     let mut txn = pool.begin().await?;
 
     info!("checking if there exist some unsent polls");
@@ -106,6 +106,39 @@ pub async fn handle_scheduled(bot: &Bot, pool: &PgPool) -> Result<()> {
         send_poll(bot, &mut txn, poll).await?;
 
         txn.commit().await?;
+    }
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all, err)]
+pub async fn handle_scheduled_overdue(bot: &Bot, pool: &PgPool) -> Result<()> {
+    info!("checking if there exist some overdue polls");
+    for kind in PollKind::iter() {
+        let mut txn = pool.begin().await?;
+
+        let polls = Poll::get_overdue(&mut txn, kind).await?;
+        if polls.is_empty() {
+            info!(%kind, "no polls to overdue");
+        } else {
+            info!(%kind, overdue_polls_kind = polls.len(), "found some overdue polls");
+        }
+
+        txn.commit().await?;
+
+        for poll in polls {
+            info!(
+                poll_id = poll.id,
+                user_id = poll.chat_tg_id,
+                "sending scheduled poll"
+            );
+
+            let mut txn = pool.begin().await?;
+
+            overdue_poll(bot, &mut txn, poll).await?;
+
+            txn.commit().await?;
+        }
     }
 
     Ok(())

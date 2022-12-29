@@ -1,9 +1,9 @@
 use std::fmt::Debug;
 
-use color_eyre::Result;
+use color_eyre::{eyre::eyre, Result};
 use sqlx::FromRow;
 use time::OffsetDateTime;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use teloxide::types::{MediaKind, Message, MessageKind};
 
@@ -13,6 +13,7 @@ use crate::{PgTransaction, PollKind, User};
 pub struct Poll {
     pub id: Option<i64>,
     pub tg_id: Option<String>,
+    pub tg_message_id: Option<i32>,
     pub chat_tg_id: i64,
     pub kind: PollKind,
     pub publication_date: time::OffsetDateTime,
@@ -30,6 +31,7 @@ impl Poll {
         Self {
             id: None,
             tg_id: None,
+            tg_message_id: None,
             chat_tg_id: user_tg_id,
             kind,
             publication_date: publication_date.unwrap_or_else(OffsetDateTime::now_utc),
@@ -49,6 +51,7 @@ impl Poll {
             .map(|kind| Self {
                 id: None,
                 tg_id: None,
+                tg_message_id: None,
                 chat_tg_id: user.tg_id,
                 kind,
                 publication_date,
@@ -73,14 +76,16 @@ impl Poll {
 INSERT INTO polls (
     chat_tg_id,
     tg_id,
+    tg_message_id,
     kind,
     publication_date,
     published
 )
-VALUES ($1, $2, $3, $4, $5)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING
     id as "id?",
     tg_id,
+    tg_message_id,
     chat_tg_id,
     kind as "kind: PollKind",
     publication_date,
@@ -88,6 +93,7 @@ RETURNING
 "#,
             self.chat_tg_id,
             self.tg_id,
+            self.tg_message_id,
             self.kind.to_string(),
             self.publication_date,
             self.published,
@@ -100,10 +106,13 @@ RETURNING
     pub async fn schedule_next(self, txn: &mut PgTransaction<'_>) -> Result<Self> {
         let next_at = self.kind.schedule_next(self.publication_date);
         let poll = Self {
+            id: None,
             publication_date: next_at,
             published: false,
             tg_id: None,
-            ..self
+            tg_message_id: None,
+            chat_tg_id: self.chat_tg_id,
+            kind: self.kind,
         };
 
         poll.insert(txn).await
@@ -125,14 +134,16 @@ RETURNING
 UPDATE polls
 SET
     tg_id = $2,
-    chat_tg_id = $3,
-    kind = $4,
-    publication_date = $5,
-    published = $6
+    tg_message_id = $3,
+    chat_tg_id = $4,
+    kind = $5,
+    publication_date = $6,
+    published = $7
 WHERE id = $1
 RETURNING
     id as "id?",
     tg_id,
+    tg_message_id,
     chat_tg_id,
     kind as "kind: PollKind",
     publication_date,
@@ -140,6 +151,7 @@ RETURNING
             "#,
                 id,
                 self.tg_id,
+                self.tg_message_id,
                 self.chat_tg_id,
                 self.kind.to_string(),
                 self.publication_date,
@@ -161,6 +173,7 @@ RETURNING
 SELECT
     id as "id?",
     tg_id,
+    tg_message_id,
     chat_tg_id,
     kind as "kind: PollKind",
     publication_date,
@@ -183,6 +196,7 @@ WHERE
 SELECT
     id as "id?",
     polls.tg_id as tg_id,
+    tg_message_id,
     chat_tg_id,
     kind as "kind: PollKind",
     publication_date,
@@ -216,6 +230,7 @@ WHERE
 SELECT
     id as "id?",
     polls.tg_id as tg_id,
+    tg_message_id,
     chat_tg_id,
     kind as "kind: PollKind",
     publication_date,
@@ -235,6 +250,67 @@ ORDER BY
             "#,
             user_tg_id,
             kind.to_string(),
+        )
+        .fetch_all(txn)
+        .await?)
+    }
+
+    #[tracing::instrument(skip(txn), err)]
+    pub async fn set_overdue(self, txn: &mut PgTransaction<'_>) -> Result<()> {
+        let updated = sqlx::query!(
+            r#"
+UPDATE polls
+SET
+    overdue = True
+WHERE
+    id = $1
+            "#,
+            self.id
+        )
+        .execute(txn)
+        .await?
+        .rows_affected();
+
+        if updated == 0 {
+            warn!("no polls updated");
+        }
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(txn), err)]
+    pub async fn get_overdue(txn: &mut PgTransaction<'_>, kind: PollKind) -> Result<Vec<Self>> {
+        let pg_interval: sqlx::postgres::types::PgInterval = kind
+            .overdue_interval()
+            .try_into()
+            .map_err(|e| eyre!("{e}"))?;
+
+        Ok(sqlx::query_as!(
+            Self,
+            r#"
+SELECT
+    polls.id as "id?",
+    tg_id,
+    tg_message_id,
+    chat_tg_id,
+    kind as "kind: PollKind",
+    publication_date,
+    published
+FROM
+    polls
+LEFT JOIN
+    poll_answers
+ON
+    polls.tg_id = poll_answers.poll_tg_id
+WHERE
+    NOT polls.overdue
+    AND polls.published
+    AND polls.kind = $1
+    AND polls.publication_date < (NOW() - $2::interval)
+    AND poll_answers.id IS NULL
+            "#,
+            kind.to_string(),
+            pg_interval
         )
         .fetch_all(txn)
         .await?)
@@ -275,8 +351,8 @@ WHERE
 
         for message in poll_messages {
             // FIXME: do not clone here
-            if let MessageKind::Common(message) = message.kind.clone() {
-                if let MediaKind::Poll(tg_poll) = message.media_kind {
+            if let MessageKind::Common(message_common) = message.kind.clone() {
+                if let MediaKind::Poll(tg_poll) = message_common.media_kind {
                     debug!(
                         poll_id = prev_id,
                         user_id = poll.chat_tg_id,
@@ -287,6 +363,7 @@ WHERE
                     // TODO: think about refactoring in two methods
                     // save that poll is published
                     poll.published = true;
+                    poll.tg_message_id = Some(message.id.0);
                     poll.tg_id = Some(tg_poll.poll.id.clone());
                     if poll.id.is_some() {
                         poll = poll.update(&mut *txn).await?.expect("post update failed");

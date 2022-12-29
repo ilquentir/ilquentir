@@ -1,5 +1,67 @@
 {
   "db": "PostgreSQL",
+  "04b8cb6a0abb9993a16e634f342dd2266e048bcd3fdb7e255c4f9d063a296db6": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id?",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "tg_id",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "tg_message_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "chat_tg_id",
+          "ordinal": 3,
+          "type_info": "Int8"
+        },
+        {
+          "name": "kind: PollKind",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "publication_date",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "published",
+          "ordinal": 6,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Varchar",
+          "Int4",
+          "Int8",
+          "Varchar",
+          "Timestamptz",
+          "Bool"
+        ]
+      }
+    },
+    "query": "\nUPDATE polls\nSET\n    tg_id = $2,\n    tg_message_id = $3,\n    chat_tg_id = $4,\n    kind = $5,\n    publication_date = $6,\n    published = $7\nWHERE id = $1\nRETURNING\n    id as \"id?\",\n    tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\n            "
+  },
   "0772984240d10cf70304e992a1542287b7609dcf36735c5b24b9441a6e110cbe": {
     "describe": {
       "columns": [
@@ -21,56 +83,6 @@
       }
     },
     "query": "\nSELECT\n    id\nFROM\n    poll_custom_options\nWHERE\n    poll_kind = $1\n    AND user_tg_id = $2\n    AND option_text = $3\n            "
-  },
-  "0aa46b7f04ee1dba3c9c2eeb22661003c4d4caa72fc711bf672ad503c2f01c50": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id?",
-          "ordinal": 0,
-          "type_info": "Int8"
-        },
-        {
-          "name": "tg_id",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "chat_tg_id",
-          "ordinal": 2,
-          "type_info": "Int8"
-        },
-        {
-          "name": "kind: PollKind",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "publication_date",
-          "ordinal": 4,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "published",
-          "ordinal": 5,
-          "type_info": "Bool"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "\nSELECT\n    id as \"id?\",\n    tg_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nWHERE\n    tg_id = $1\n            "
   },
   "12818c8e1c7265ff034a6bef9c0ead32671a713f78222721b3a3e125e9ab370c": {
     "describe": {
@@ -111,7 +123,7 @@
     },
     "query": "\nINSERT INTO users (tg_id, active)\nVALUES ($1, true)\nON CONFLICT (tg_id) DO UPDATE SET active = true\nRETURNING tg_id, active\n            "
   },
-  "36479882aa989d1415317ba6757a702f6628b8227b81f8ff6c07a4a4fb7c4452": {
+  "1d7596dbdb39ce0b61ab742faa99e25c905707d7945cceab99cbecc534c4832a": {
     "describe": {
       "columns": [
         {
@@ -125,28 +137,34 @@
           "type_info": "Varchar"
         },
         {
-          "name": "chat_tg_id",
+          "name": "tg_message_id",
           "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "chat_tg_id",
+          "ordinal": 3,
           "type_info": "Int8"
         },
         {
           "name": "kind: PollKind",
-          "ordinal": 3,
+          "ordinal": 4,
           "type_info": "Varchar"
         },
         {
           "name": "publication_date",
-          "ordinal": 4,
+          "ordinal": 5,
           "type_info": "Timestamptz"
         },
         {
           "name": "published",
-          "ordinal": 5,
+          "ordinal": 6,
           "type_info": "Bool"
         }
       ],
       "nullable": [
         false,
+        true,
         true,
         false,
         false,
@@ -156,14 +174,11 @@
       "parameters": {
         "Left": [
           "Int8",
-          "Varchar",
-          "Varchar",
-          "Timestamptz",
-          "Bool"
+          "Text"
         ]
       }
     },
-    "query": "\nINSERT INTO polls (\n    chat_tg_id,\n    tg_id,\n    kind,\n    publication_date,\n    published\n)\nVALUES ($1, $2, $3, $4, $5)\nRETURNING\n    id as \"id?\",\n    tg_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\n"
+    "query": "\nSELECT\n    id as \"id?\",\n    polls.tg_id as tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nJOIN users\nON\n    polls.chat_tg_id = users.tg_id\nWHERE\n    NOT polls.published\n    AND polls.publication_date > NOW()\n    AND users.active\n    AND users.tg_id = $1\n    AND polls.kind = $2\nORDER BY\n    polls.chat_tg_id\n            "
   },
   "4458a8af5c385abd3dfc12a5a4ab18d3c2412c027e501e68592cb13df7d8145b": {
     "describe": {
@@ -202,6 +217,63 @@
       }
     },
     "query": "\nSELECT\n    polls.kind as \"kind: PollKind\",\n    DATE(polls.publication_date - interval '12 hours') as \"date!\",\n    selected_value,\n    COUNT(poll_answers.id) as \"n_selected!\"\nFROM poll_answers\nJOIN polls\nON poll_answers.poll_tg_id = polls.tg_id\nWHERE\n    polls.kind = $1\n    AND DATE(polls.publication_date - interval '12 hours') = DATE(NOW() - interval '22 hours')\nGROUP BY\n    selected_value,\n    polls.kind,\n    DATE(polls.publication_date - interval '12 hours')\n            "
+  },
+  "445f0324236fa1133098266dcde3439dbc36e435714e0d8a97fe349aeee55124": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id?",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "tg_id",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "tg_message_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "chat_tg_id",
+          "ordinal": 3,
+          "type_info": "Int8"
+        },
+        {
+          "name": "kind: PollKind",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "publication_date",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "published",
+          "ordinal": 6,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Interval"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    polls.id as \"id?\",\n    tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM\n    polls\nLEFT JOIN\n    poll_answers\nON\n    polls.tg_id = poll_answers.poll_tg_id\nWHERE\n    NOT polls.overdue\n    AND polls.published\n    AND polls.kind = $1\n    AND polls.publication_date < (NOW() - $2::interval)\n    AND poll_answers.id IS NULL\n            "
   },
   "5e7add7bbb7ed38bb558b67151c7c04b6b294e81b79e4c051120983504ecfdf5": {
     "describe": {
@@ -250,104 +322,17 @@
     },
     "query": "\nDELETE FROM poll_custom_options\nWHERE\n    user_tg_id = $1\n    AND poll_kind = $2\n            "
   },
-  "675d99ce9db8d89d365a4cea9320d7084a62664ff98f8ab46a96f1b7b0dbf245": {
+  "623e1a5165603b76777711e18d0d813b44913b1c54d987c65cde4be10184a72e": {
     "describe": {
-      "columns": [
-        {
-          "name": "id?",
-          "ordinal": 0,
-          "type_info": "Int8"
-        },
-        {
-          "name": "tg_id",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "chat_tg_id",
-          "ordinal": 2,
-          "type_info": "Int8"
-        },
-        {
-          "name": "kind: PollKind",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "publication_date",
-          "ordinal": 4,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "published",
-          "ordinal": 5,
-          "type_info": "Bool"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": []
-      }
-    },
-    "query": "\nSELECT\n    id as \"id?\",\n    polls.tg_id as tg_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nJOIN users\nON\n    polls.chat_tg_id = users.tg_id\nWHERE\n    NOT polls.published\n    AND polls.publication_date < NOW()\n    AND users.active\n            "
-  },
-  "6e40b1164411532d94fc39b7a166512fdc19e52460a89288561a485dbcf93600": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id?",
-          "ordinal": 0,
-          "type_info": "Int8"
-        },
-        {
-          "name": "tg_id",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "chat_tg_id",
-          "ordinal": 2,
-          "type_info": "Int8"
-        },
-        {
-          "name": "kind: PollKind",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "publication_date",
-          "ordinal": 4,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "published",
-          "ordinal": 5,
-          "type_info": "Bool"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        false,
-        false,
-        false,
-        false
-      ],
+      "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
-          "Int8",
-          "Text"
+          "Int8"
         ]
       }
     },
-    "query": "\nSELECT\n    id as \"id?\",\n    polls.tg_id as tg_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nJOIN users\nON\n    polls.chat_tg_id = users.tg_id\nWHERE\n    NOT polls.published\n    AND polls.publication_date > NOW()\n    AND users.active\n    AND users.tg_id = $1\n    AND polls.kind = $2\nORDER BY\n    polls.chat_tg_id\n            "
+    "query": "\nUPDATE polls\nSET\n    overdue = True\nWHERE\n    id = $1\n            "
   },
   "81f1b8b82fa8aed4854f6fa5f08dc0ded0ae700d141147e61752c62d726b14e9": {
     "describe": {
@@ -417,7 +402,7 @@
     },
     "query": "\nSELECT tg_id, active\nFROM users\nWHERE\n    tg_id = $1\n    AND active\n            "
   },
-  "baae46e939089f19236d02e6de1c6c69bbb0636ae28dcc592c0cc074be345dd7": {
+  "b0411596500a15df90286e3c85e891b403021f12b259c34d20dc746b2b192e5b": {
     "describe": {
       "columns": [
         {
@@ -431,28 +416,34 @@
           "type_info": "Varchar"
         },
         {
-          "name": "chat_tg_id",
+          "name": "tg_message_id",
           "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "chat_tg_id",
+          "ordinal": 3,
           "type_info": "Int8"
         },
         {
           "name": "kind: PollKind",
-          "ordinal": 3,
+          "ordinal": 4,
           "type_info": "Varchar"
         },
         {
           "name": "publication_date",
-          "ordinal": 4,
+          "ordinal": 5,
           "type_info": "Timestamptz"
         },
         {
           "name": "published",
-          "ordinal": 5,
+          "ordinal": 6,
           "type_info": "Bool"
         }
       ],
       "nullable": [
         false,
+        true,
         true,
         false,
         false,
@@ -463,14 +454,14 @@
         "Left": [
           "Int8",
           "Varchar",
-          "Int8",
+          "Int4",
           "Varchar",
           "Timestamptz",
           "Bool"
         ]
       }
     },
-    "query": "\nUPDATE polls\nSET\n    tg_id = $2,\n    chat_tg_id = $3,\n    kind = $4,\n    publication_date = $5,\n    published = $6\nWHERE id = $1\nRETURNING\n    id as \"id?\",\n    tg_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\n            "
+    "query": "\nINSERT INTO polls (\n    chat_tg_id,\n    tg_id,\n    tg_message_id,\n    kind,\n    publication_date,\n    published\n)\nVALUES ($1, $2, $3, $4, $5, $6)\nRETURNING\n    id as \"id?\",\n    tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\n"
   },
   "cb0fad5bbd847594176f786c6c69d3b6eae5899359552c9981923bf43b7e3106": {
     "describe": {
@@ -485,6 +476,60 @@
       }
     },
     "query": "\nINSERT INTO poll_custom_options (\n    poll_kind, user_tg_id, option_text\n)\nVALUES ($1, $2, $3)\n                "
+  },
+  "d51b837b493bb0f76f705d60ad0a40faf098b32b12521a5fa6551cdeb040ffe9": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id?",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "tg_id",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "tg_message_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "chat_tg_id",
+          "ordinal": 3,
+          "type_info": "Int8"
+        },
+        {
+          "name": "kind: PollKind",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "publication_date",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "published",
+          "ordinal": 6,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\nSELECT\n    id as \"id?\",\n    polls.tg_id as tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nJOIN users\nON\n    polls.chat_tg_id = users.tg_id\nWHERE\n    NOT polls.published\n    AND polls.publication_date < NOW()\n    AND users.active\n            "
   },
   "d60fbc223d7d94521aeca70d231404519e57543a98a2a6896ccdbf0605167f63": {
     "describe": {
@@ -523,6 +568,62 @@
       }
     },
     "query": "\nDELETE FROM poll_custom_options\nWHERE\n    poll_kind = $1\n    AND user_tg_id = $2\n    AND option_text = $3\n                "
+  },
+  "d955791dc0d538666bb0ccd69912d0af8877d1f209a414ba4054d253a347d512": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id?",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "tg_id",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "tg_message_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "chat_tg_id",
+          "ordinal": 3,
+          "type_info": "Int8"
+        },
+        {
+          "name": "kind: PollKind",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "publication_date",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "published",
+          "ordinal": 6,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    id as \"id?\",\n    tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nWHERE\n    tg_id = $1\n            "
   },
   "dae6e58fb74c36560936d2b11a8de0680c5c8af0b2e86d7a098321bee9d2efec": {
     "describe": {
