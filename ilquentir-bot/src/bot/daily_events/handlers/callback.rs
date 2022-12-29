@@ -119,7 +119,7 @@ pub async fn handle_promo_callback(
     if options::PROMO_NO_BUTTON.matches(payload) {
         bot.send_message(
             user_tg_id.to_string(),
-            md_message!("daily_events/promo_no.md"),
+            md_message!("promo/daily_events_no.md"),
         )
         .await?;
     } else if options::PROMO_YES_BUTTON.matches(payload) {
