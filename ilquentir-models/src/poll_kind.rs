@@ -2,7 +2,7 @@ use color_eyre::Result;
 use time::{ext::NumericalDuration, macros::time, Duration, OffsetDateTime, Time};
 use tracing::error;
 
-use crate::{PgTransaction, PollCustomOptions};
+use crate::{PgTransaction, PollCustomOptions, PollSettings};
 
 /// Describes possible kind of polls
 #[derive(
@@ -35,6 +35,26 @@ impl PollKind {
         None
     }
 
+    #[tracing::instrument(skip(txn), err)]
+    pub async fn schedule_next_custom(
+        self,
+        txn: &mut PgTransaction<'_>,
+        user_tg_id: i64,
+        current: OffsetDateTime,
+    ) -> Result<Option<OffsetDateTime>> {
+        let send_at = PollSettings::get(txn, user_tg_id, self)
+            .await?
+            .and_then(|settings| settings.send_at_utc);
+
+        if let Some(send_at) = send_at {
+            let next = current.replace_time(send_at);
+
+            Ok(Some(ensure_delay(current, next)))
+        } else {
+            Ok(None)
+        }
+    }
+
     /// Get next time to send the poll.
     ///
     /// ## Human-friendliness
@@ -50,11 +70,8 @@ impl PollKind {
     pub fn schedule_next(self, current: OffsetDateTime) -> OffsetDateTime {
         if let Some(send_at) = self.send_at() {
             let next = current.replace_time(send_at);
-            if next >= current + Duration::hours(12) {
-                next
-            } else {
-                next + Duration::DAY
-            }
+
+            ensure_delay(current, next)
         } else if let Some(time_between) = self.time_between() {
             current + time_between
         } else {
@@ -124,6 +141,16 @@ impl PollKind {
                 chosen
             }
         })
+    }
+}
+
+fn ensure_delay(current: OffsetDateTime, next: OffsetDateTime) -> OffsetDateTime {
+    const MIN_DELAY: Duration = Duration::hours(12);
+
+    if next >= current + MIN_DELAY {
+        next
+    } else {
+        next + Duration::DAY
     }
 }
 

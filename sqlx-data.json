@@ -180,6 +180,39 @@
     },
     "query": "\nSELECT\n    id as \"id?\",\n    polls.tg_id as tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nJOIN users\nON\n    polls.chat_tg_id = users.tg_id\nWHERE\n    NOT polls.published\n    AND polls.publication_date > NOW()\n    AND users.active\n    AND users.tg_id = $1\n    AND polls.kind = $2\nORDER BY\n    polls.chat_tg_id\n            "
   },
+  "362f1a30fe30a3fb4db8e3d3568c91dcf93dacf02df69a1606dae46b2db3eb73": {
+    "describe": {
+      "columns": [
+        {
+          "name": "poll_kind: _",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "user_tg_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "send_at_utc",
+          "ordinal": 2,
+          "type_info": "Time"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    poll_kind as \"poll_kind: _\",\n    user_tg_id,\n    send_at_utc\nFROM\n    poll_settings\nWHERE\n    user_tg_id = $1\n    AND poll_kind = $2\n            "
+  },
   "4458a8af5c385abd3dfc12a5a4ab18d3c2412c027e501e68592cb13df7d8145b": {
     "describe": {
       "columns": [
@@ -462,6 +495,40 @@
       }
     },
     "query": "\nINSERT INTO polls (\n    chat_tg_id,\n    tg_id,\n    tg_message_id,\n    kind,\n    publication_date,\n    published\n)\nVALUES ($1, $2, $3, $4, $5, $6)\nRETURNING\n    id as \"id?\",\n    tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\n"
+  },
+  "c03789c11e46c7dfbf96e2706adffdeb46f802e1dc212d071d4df710df349e78": {
+    "describe": {
+      "columns": [
+        {
+          "name": "user_tg_id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "poll_kind: _",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "send_at_utc",
+          "ordinal": 2,
+          "type_info": "Time"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Varchar",
+          "Time"
+        ]
+      }
+    },
+    "query": "\nINSERT INTO poll_settings (\n    user_tg_id,\n    poll_kind,\n    send_at_utc\n)\nVALUES ($1, $2, $3)\nON CONFLICT ON CONSTRAINT poll_settings_poll_kind_user_tg_id_key DO\nUPDATE SET\n    send_at_utc = $3\nRETURNING\n    user_tg_id,\n    poll_kind as \"poll_kind: _\",\n    send_at_utc\n            "
   },
   "cb0fad5bbd847594176f786c6c69d3b6eae5899359552c9981923bf43b7e3106": {
     "describe": {
