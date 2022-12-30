@@ -5,7 +5,7 @@ use teloxide::{
     dispatching::{DefaultKey, HandlerExt, UpdateFilterExt},
     prelude::Dispatcher as TgDispatcher,
     requests::{Requester, RequesterExt},
-    types::{ParseMode, Update, UpdateKind},
+    types::{Message, MessageKind, ParseMode, Update, UpdateKind},
     utils::command::BotCommands,
     Bot as TgBot,
 };
@@ -20,6 +20,7 @@ pub mod helpers;
 
 mod daily_events;
 mod how_was_your_day;
+mod setup_schedule;
 
 use self::{
     commands::Command,
@@ -56,10 +57,23 @@ pub async fn create_bot_and_dispatcher(
         )
         .branch(
             dptree::entry()
-                .filter(|update: Update| matches!(update.kind, UpdateKind::Poll(_)))
+                .filter_map(|update: Update| match update.kind {
+                    UpdateKind::Poll(poll) => Some(poll),
+                    _ => None,
+                })
                 .endpoint(handle_poll_update),
         )
-        .branch(Update::filter_callback_query().endpoint(handle_callback));
+        .branch(Update::filter_callback_query().endpoint(handle_callback))
+        .branch(
+            Update::filter_message().branch(
+                dptree::entry()
+                    .filter_map(|message: Message| match message.kind {
+                        MessageKind::WebAppData(data) => Some(data),
+                        _ => None,
+                    })
+                    .endpoint(setup_schedule::handle_webapp),
+            ),
+        );
 
     Ok((
         TgDispatcher::builder(bot.clone(), handler)

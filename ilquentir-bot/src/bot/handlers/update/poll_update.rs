@@ -2,9 +2,9 @@ use color_eyre::Result;
 use sqlx::PgPool;
 use teloxide::{
     requests::Requester,
-    types::{ChatId, Update, UpdateKind},
+    types::{ChatId, Poll as TgPoll, Update},
 };
-use tracing::{info, warn};
+use tracing::info;
 
 use ilquentir_config::Config;
 use ilquentir_giphy::GiphyApi;
@@ -20,6 +20,7 @@ pub async fn handle_poll_update(
     _giphy: GiphyApi,
     config: Config,
     update: Update,
+    tg_poll: TgPoll,
 ) -> Result<()> {
     let user_id = update.user().map(|u| u.id.0);
     let chat_id = update.chat().map(|c| c.id);
@@ -27,63 +28,60 @@ pub async fn handle_poll_update(
 
     info!(user_id, chat_id = chat_id_trace, "start processing update");
 
-    if let UpdateKind::Poll(tg_poll) = update.kind {
-        info!(
-            user_id,
-            chat_id = chat_id_trace,
-            poll_id = tg_poll.id,
-            "got Poll update, saving data"
-        );
-        let mut txn = pool.begin().await?;
+    info!(
+        user_id,
+        chat_id = chat_id_trace,
+        poll_id = tg_poll.id,
+        "got Poll update, saving data"
+    );
 
-        let poll = PollAnswer::save_answer(&mut txn, &tg_poll).await?;
-        info!(
-            user_id,
-            chat_id = chat_id_trace,
-            poll_id = poll.tg_id,
-            "data saved, sending the reply"
-        );
+    let mut txn = pool.begin().await?;
 
-        // let's finish the txn before lots of communication with external APIs
-        txn.commit().await?;
+    let poll = PollAnswer::save_answer(&mut txn, &tg_poll).await?;
+    info!(
+        user_id,
+        chat_id = chat_id_trace,
+        poll_id = poll.tg_id,
+        "data saved, sending the reply"
+    );
 
-        let chat_id = ChatId(poll.chat_tg_id);
+    // let's finish the txn before lots of communication with external APIs
+    txn.commit().await?;
 
-        // send generic response
-        // let cat_gif = tokio::time::timeout(
-        //     Duration::from_secs(2),
-        //     giphy.get_random_cat_gif()
-        // ).await.unwrap_or_else(|_| {
-        //     warn!("timeout while requesting GIPHY api");
+    let chat_id = ChatId(poll.chat_tg_id);
 
-        //     Ok("https://media0.giphy.com/media/X3Yj4XXXieKYM/giphy-loop.mp4?cid=fd4c87ca9b02f849d4548fc9530a2dbe6e058599dc2630af&rid=giphy-loop.mp4&ct=g".parse().unwrap())
-        // })?;
+    // send generic response
+    // let cat_gif = tokio::time::timeout(
+    //     Duration::from_secs(2),
+    //     giphy.get_random_cat_gif()
+    // ).await.unwrap_or_else(|_| {
+    //     warn!("timeout while requesting GIPHY api");
 
-        // info!(user_id, chat_id = chat_id.0, "sending cat gif");
-        // bot.send_animation(chat_id.to_string(), InputFile::url(cat_gif))
-        //     .await?;
+    //     Ok("https://media0.giphy.com/media/X3Yj4XXXieKYM/giphy-loop.mp4?cid=fd4c87ca9b02f849d4548fc9530a2dbe6e058599dc2630af&rid=giphy-loop.mp4&ct=g".parse().unwrap())
+    // })?;
 
-        info!(user_id, chat_id = chat_id.0, "sending message");
-        match poll.kind {
-            PollKind::HowWasYourDay => {
-                how_was_your_day::poll_answered(&bot, &pool, &poll, config.clone()).await?
-            }
-            PollKind::FoodAllergy => {
-                bot.send_message(chat_id.to_string(), md!("Meow :)"))
-                    .await?;
-            }
-            PollKind::DailyEvents => daily_events::poll_answered(&bot, &pool, &poll).await?,
-        };
+    // info!(user_id, chat_id = chat_id.0, "sending cat gif");
+    // bot.send_animation(chat_id.to_string(), InputFile::url(cat_gif))
+    //     .await?;
 
-        info!(
-            user_id,
-            chat_id = chat_id_trace,
-            poll_id = poll.tg_id,
-            "reply sent, commiting txn"
-        );
-    } else {
-        warn!(user_id, chat_id = chat_id_trace, update = ?update, "unexpected update type");
-    }
+    info!(user_id, chat_id = chat_id.0, "sending message");
+    match poll.kind {
+        PollKind::HowWasYourDay => {
+            how_was_your_day::poll_answered(&bot, &pool, &poll, config.clone()).await?
+        }
+        PollKind::FoodAllergy => {
+            bot.send_message(chat_id.to_string(), md!("Meow :)"))
+                .await?;
+        }
+        PollKind::DailyEvents => daily_events::poll_answered(&bot, &pool, &poll).await?,
+    };
+
+    info!(
+        user_id,
+        chat_id = chat_id_trace,
+        poll_id = poll.tg_id,
+        "reply sent, commiting txn"
+    );
 
     Ok(())
 }

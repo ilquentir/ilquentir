@@ -1,7 +1,8 @@
 use color_eyre::Result;
 use sqlx::FromRow;
+use strum::IntoEnumIterator;
 
-use crate::{PgTransaction, PollKind};
+use crate::{PgTransaction, Poll, PollKind};
 
 #[derive(Debug, Clone, FromRow)]
 pub struct User {
@@ -45,6 +46,10 @@ RETURNING tg_id, active
 
     #[tracing::instrument(skip(txn), err)]
     pub async fn deactivate(txn: &mut PgTransaction<'_>, user_id: i64) -> Result<Self> {
+        for kind in PollKind::iter() {
+            Poll::disable_pending_for_user(&mut *txn, user_id, kind).await?;
+        }
+
         Ok(sqlx::query_as!(
             Self,
             r#"

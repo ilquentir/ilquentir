@@ -107,11 +107,7 @@ RETURNING
         // try get custom sending time
         let next_at = self
             .kind
-            .schedule_next_custom(
-                txn,
-                self.chat_tg_id,
-                self.publication_date
-            )
+            .schedule_next_custom(txn, self.chat_tg_id, self.publication_date)
             .await?
             // fallback to default behaviour
             .unwrap_or_else(|| self.kind.schedule_next(self.publication_date));

@@ -22,7 +22,7 @@ impl PollSettings {
             Self,
             r#"
 SELECT
-    poll_kind as "poll_kind: _",
+    poll_kind as "poll_kind: PollKind",
     user_tg_id,
     send_at_utc
 FROM
@@ -59,7 +59,7 @@ UPDATE SET
     send_at_utc = $3
 RETURNING
     user_tg_id,
-    poll_kind as "poll_kind: _",
+    poll_kind as "poll_kind: PollKind",
     send_at_utc
             "#,
             user_tg_id,
