@@ -2,7 +2,7 @@ use color_eyre::{eyre::eyre, Result};
 use sqlx::PgPool;
 use teloxide::{
     requests::Requester,
-    types::{Message, MessageWebAppData},
+    types::{Message, MessageWebAppData, ReplyMarkup}, payloads::SendMessageSetters,
 };
 use time::{ext::NumericalDuration, macros::format_description, OffsetDateTime, UtcOffset};
 
@@ -66,6 +66,7 @@ pub async fn handle_webapp(
             ))?,
         ),
     )
+    .reply_markup(ReplyMarkup::kb_remove())
     .await?;
 
     Ok(())
