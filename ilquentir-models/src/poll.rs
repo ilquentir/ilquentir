@@ -104,7 +104,14 @@ RETURNING
 
     #[tracing::instrument(skip(txn), err)]
     pub async fn schedule_next(self, txn: &mut PgTransaction<'_>) -> Result<Self> {
-        let next_at = self.kind.schedule_next(self.publication_date);
+        // try get custom sending time
+        let next_at = self
+            .kind
+            .schedule_next_custom(txn, self.chat_tg_id, self.publication_date)
+            .await?
+            // fallback to default behaviour
+            .unwrap_or_else(|| self.kind.schedule_next(self.publication_date));
+
         let poll = Self {
             id: None,
             publication_date: next_at,

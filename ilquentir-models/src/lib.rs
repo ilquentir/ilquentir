@@ -9,6 +9,9 @@ pub use poll_custom_options::PollCustomOptions;
 mod poll_kind;
 pub use poll_kind::PollKind;
 
+mod poll_settings;
+pub use poll_settings::PollSettings;
+
 mod poll_stat;
 pub use poll_stat::PollStat;
 
