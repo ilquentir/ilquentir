@@ -13,6 +13,7 @@ ilquentir-giphy = { path = "../ilquentir-giphy" }
 ilquentir-graphs = { path = "../ilquentir-graphs" }
 ilquentir-messages = { path = "../ilquentir-messages" }
 ilquentir-models = { path = "../ilquentir-models" }
+ilquentir-python-graph = { path = "../ilquentir-python-graph" }
 
 # generic dependencies
 color-eyre = { workspace = true }

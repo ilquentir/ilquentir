@@ -7,7 +7,7 @@ use ilquentir_models::{PgTransaction, User};
 
 use crate::bot::Bot;
 
-#[tracing::instrument(skip(bot, txn), fields(chat_id=chat_id.0), err)]
+#[tracing::instrument(skip_all, fields(chat_id=chat_id.0), err)]
 pub async fn handle_stop(bot: &Bot, txn: &mut PgTransaction<'_>, chat_id: ChatId) -> Result<()> {
     let user = User::deactivate(txn, chat_id.0).await?;
 

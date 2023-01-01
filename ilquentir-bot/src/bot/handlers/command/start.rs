@@ -12,7 +12,7 @@ use crate::bot::{
     Bot,
 };
 
-#[tracing::instrument(skip(bot, txn), fields(chat_id=chat_id.0), err)]
+#[tracing::instrument(skip_all, fields(chat_id=chat_id.0), err)]
 pub async fn handle_start(bot: &Bot, txn: &mut PgTransaction<'_>, chat_id: ChatId) -> Result<()> {
     info!(chat_id = chat_id.0, "processing Start command");
 

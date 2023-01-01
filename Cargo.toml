@@ -5,6 +5,7 @@ members = [
     'ilquentir-giphy',
     'ilquentir-messages',
     'ilquentir-models',
+    'ilquentir-python-graph',
 ]
 
 [workspace.package]
@@ -24,7 +25,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "parki
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
 strum = { version = "0.24", features = ["derive"] }
-time = { version = "0.3", features = ["macros", "formatting"] }
+time = { version = "0.3", features = ["macros", "formatting", "serde"] }
 url = "2"
 
 [workspace.dependencies.sqlx]

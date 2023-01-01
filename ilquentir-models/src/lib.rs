@@ -24,4 +24,7 @@ pub use poll::Poll;
 mod user;
 pub use user::User;
 
+mod wide_how_was_your_day;
+pub use wide_how_was_your_day::WideHowWasYourDay;
+
 pub type PgTransaction<'t> = Transaction<'t, Postgres>;

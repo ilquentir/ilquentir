@@ -1,8 +1,9 @@
 use color_eyre::{eyre::eyre, Result};
 use sqlx::PgPool;
 use teloxide::{
+    payloads::SendMessageSetters,
     requests::Requester,
-    types::{Message, MessageWebAppData, ReplyMarkup}, payloads::SendMessageSetters,
+    types::{Message, MessageWebAppData, ReplyMarkup},
 };
 use time::{ext::NumericalDuration, macros::format_description, OffsetDateTime, UtcOffset};
 
