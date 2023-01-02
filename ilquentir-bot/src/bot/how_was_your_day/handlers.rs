@@ -42,10 +42,6 @@ pub async fn poll_answered(bot: &Bot, pool: &PgPool, poll: &Poll) -> Result<()> 
     )
     .await?;
 
-    set_typing(bot, chat_id.to_string(), Some(Duration::from_millis(1000))).await?;
-    bot.send_message(chat_id.to_string(), md_message!("promo/setup_schedule.md"))
-        .await?;
-
     if Poll::get_scheduled_for_user(&mut pool.begin().await?, chat_id, PollKind::DailyEvents)
         .await?
         .is_empty()
