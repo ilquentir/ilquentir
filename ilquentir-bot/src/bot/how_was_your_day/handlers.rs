@@ -27,7 +27,7 @@ pub async fn poll_answered(bot: &Bot, pool: &PgPool, poll: &Poll) -> Result<()> 
 
         bot.send_message(
             chat_id.to_string(),
-            md_message!("onboarding/step_5_after_response.md")
+            md_message!("onboarding/step_5_after_response.md"),
         )
         .reply_markup(daily_events::keyboard::promo())
         .await?;

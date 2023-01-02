@@ -43,13 +43,16 @@ pub async fn handle_start(bot: &Bot, txn: &mut PgTransaction<'_>, chat_id: ChatI
         user_id = user.tg_id,
         "sending welcome sequence to user"
     );
-    bot.send_message(chat_id, md_message!("onboarding/step_1.md")).await?;
+    bot.send_message(chat_id, md_message!("onboarding/step_1.md"))
+        .await?;
     set_typing(bot, chat_id, Some(Duration::from_millis(500))).await?;
 
-    bot.send_message(chat_id, md_message!("onboarding/step_2.md")).await?;
+    bot.send_message(chat_id, md_message!("onboarding/step_2.md"))
+        .await?;
     set_typing(bot, chat_id, Some(Duration::from_millis(1000))).await?;
 
-    bot.send_message(chat_id, md_message!("onboarding/step_3.md")).await?;
+    bot.send_message(chat_id, md_message!("onboarding/step_3.md"))
+        .await?;
     set_typing(bot, chat_id, Some(Duration::from_millis(1000))).await?;
 
     bot.send_message(

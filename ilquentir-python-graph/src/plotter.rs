@@ -85,8 +85,7 @@ impl Plotter {
         let elapsed_since_update = wide_file.metadata().await?.modified()?.elapsed()?;
         debug!(?elapsed_since_update, "got following freshness info");
 
-        if !force && elapsed_since_update < self.config.wide_how_was_your_day_max_age
-        {
+        if !force && elapsed_since_update < self.config.wide_how_was_your_day_max_age {
             info!("wide table is in actual state");
 
             return Ok(false);

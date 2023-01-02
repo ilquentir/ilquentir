@@ -62,9 +62,7 @@ pub async fn handle_poll_update(
 
     info!(user_id, chat_id = chat_id.0, "sending message");
     match poll.kind {
-        PollKind::HowWasYourDay => {
-            how_was_your_day::poll_answered(&bot, &pool, &poll).await?
-        }
+        PollKind::HowWasYourDay => how_was_your_day::poll_answered(&bot, &pool, &poll).await?,
         PollKind::FoodAllergy => {
             bot.send_message(chat_id.to_string(), md!("Meow :)"))
                 .await?;
