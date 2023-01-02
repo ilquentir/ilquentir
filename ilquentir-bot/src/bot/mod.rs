@@ -11,7 +11,7 @@ use teloxide::{
 };
 
 use ilquentir_config::Config;
-use ilquentir_giphy::GiphyApi;
+use ilquentir_python_graph::Plotter;
 
 pub(self) mod callbacks;
 pub mod commands;
@@ -25,7 +25,7 @@ mod setup_schedule;
 
 use self::{
     commands::Command,
-    handlers::{handle_callback, handle_command, handle_poll_update},
+    handlers::{handle_ban, handle_callback, handle_command, handle_poll_update},
 };
 
 pub type Bot = Trace<DefaultParseMode<TgBot>>;
@@ -41,12 +41,9 @@ pub async fn create_bot() -> Result<Bot> {
     Ok(bot)
 }
 
-pub async fn create_bot_and_dispatcher(
-    pool: PgPool,
-    giphy: GiphyApi,
-    config: &Config,
-) -> Result<(Dispatcher, Bot)> {
+pub async fn create_bot_and_dispatcher(pool: PgPool, config: &Config) -> Result<(Dispatcher, Bot)> {
     let bot = create_bot().await?;
+    let plotter = Plotter::new(&mut pool.begin().await?, config.clone()).await?;
 
     let handler = dptree::entry()
         .branch(
@@ -64,6 +61,7 @@ pub async fn create_bot_and_dispatcher(
                 })
                 .endpoint(handle_poll_update),
         )
+        .branch(Update::filter_my_chat_member().endpoint(handle_ban))
         .branch(Update::filter_callback_query().endpoint(handle_callback))
         .branch(
             Update::filter_message().branch(
@@ -78,7 +76,7 @@ pub async fn create_bot_and_dispatcher(
 
     Ok((
         TgDispatcher::builder(bot.clone(), handler)
-            .dependencies(dptree::deps![pool, giphy, config.clone()])
+            .dependencies(dptree::deps![pool, config.clone(), plotter])
             .enable_ctrlc_handler()
             .build(),
         bot,

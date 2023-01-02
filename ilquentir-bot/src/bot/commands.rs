@@ -11,7 +11,7 @@ pub enum Command {
     DailyEventsSettings,
     #[command(description = "Настроить, во сколько будет приходить опрос")]
     SetupSchedule,
-    #[command(description = "Дай стату")]
+    #[command(description = "Интерактивный график с моими данными")]
     GetStat,
     #[command(description = "Выключить Ильквентир (не будет приходить стата и опросы)")]
     Stop,

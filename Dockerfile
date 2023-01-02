@@ -6,6 +6,17 @@ COPY . .
 RUN cargo +nightly-2022-11-17 build -p ilquentir-bot --release -Z sparse-registry
 
 FROM debian:buster-slim
+ENV LC_ALL="ru_RU.UTF-8"
+ENV LC_CTYPE="ru_RU.UTF-8"
+RUN dpkg-reconfigure locales
+
+COPY ilquentir-python-graph/python/requirements.txt /requirements.txt
+RUN apt-get update \
+    && apt-get install python3.11 \
+    && pip install -r requirements.txt
+
+COPY ilquentir-python-graph/python/main.py /plotly_graph.py
+
 COPY --from=builder ./target/release/ilquentir-bot /ilquentir-bot
 RUN apt-get update \
     && apt-get install --assume-yes ca-certificates \

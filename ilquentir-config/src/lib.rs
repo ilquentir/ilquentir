@@ -41,8 +41,12 @@ pub struct ConfigInner {
     /// Minimal response delay for today's summary
     #[serde(with = "humantime_serde", default = "default_min_reply_delay")]
     pub min_reply_delay: Duration,
+
     /// Path for the wide_how_was_your_day export
     pub wide_how_was_your_day_path: PathBuf,
+    /// Max tolerable age of wide_how_was_your_day table
+    #[serde(with = "humantime_serde")]
+    pub wide_how_was_your_day_max_age: Duration,
     /// Path to python file, containing plotly graphing function
     pub plotly_python_code_file: PathBuf,
 }

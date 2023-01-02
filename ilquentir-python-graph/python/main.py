@@ -1,7 +1,7 @@
 def make_plot(data, user_id, date_start, date_end):
     '''
     Takes data as pandas DataFrame, user_id as int
-    and date_start, date_end as string in format "%Y-%m-%d".
+    and date_start, date_end as string in format '%Y-%m-%d'.
 
     Returns string with html plot representation.
     '''
@@ -15,33 +15,18 @@ def make_plot(data, user_id, date_start, date_end):
     ANSW_COL = 'answer_selected_value'
     EVENTS = 'events'
 
-    DATE_PLOT_FORMAT = '%d.%m.%y'
+    DATE_PLOT_FORMAT = '%d-%m-%y, %a'
 
     plot_template = go.layout.Template()
-    plot_template.data.bar = [
-        go.Bar(
-            name='Твоя оценка',
-            marker_color='rgb(221, 110, 66)',
-            marker_line=dict(width=0.2, color='rgb(255, 255, 179)')
-        )
-    ]
-    plot_template.data.scatter = [
-        go.Scatter(
-            name='Среднее',
-            line = dict(color='rgb(255, 255, 179)', width=8),
-            marker=dict(color='rgb(255, 255, 179)', size=5),
-            mode='lines+markers'
-        ),
-    ]
 
     plot_template.layout = dict(
-        font_family="Verdana",
-        font_color="rgb(249, 255, 233)",
+        font_family='Verdana',
+        font_color='rgb(249, 255, 233)',
         font_size=14,
 
-        title_text="Твое настроение",
+        title_text='Твое настроение',
         title_font_size=24,
-        title_font_color="rgb(249, 255, 233)",
+        title_font_color='rgb(249, 255, 233)',
         title_x=0.02,
         title_xanchor='auto',
 
@@ -66,9 +51,9 @@ def make_plot(data, user_id, date_start, date_end):
         yaxis_gridwidth=2,
         yaxis_gridcolor='rgb(249, 255, 233)',
 
-        hoverlabel_bgcolor='rgba(255, 255, 255, 0.5)',
+        hoverlabel_bgcolor='rgba(255, 255, 255, 0.8)',
         hoverlabel_font_size=16,
-        hoverlabel_font_family="Verdana",
+        hoverlabel_font_family='Verdana',
         hoverlabel_font_color='rgba(34, 34, 59, 1)'
     )
 
@@ -80,6 +65,7 @@ def make_plot(data, user_id, date_start, date_end):
     df[ANSW_COL] = 2 - df[ANSW_COL]
     df = df.drop_duplicates(subset=[USER_COL, DATE_COL])
     df = df[df[DATE_COL].between(date_start, date_end)]
+    df = df.fillna(value={EVENTS: '∅'})
 
     df_metrics = df.dropna(subset=[ANSW_COL]).groupby(DATE_COL)[ANSW_COL].agg(
         {
@@ -95,18 +81,33 @@ def make_plot(data, user_id, date_start, date_end):
     df_metrics['mean_normalized'] = df_metrics['mean'] + 3
 
     fig = go.Figure()
+    fig.update_layout(template=plot_template)
+
+     # add a line trace for the average
+    fig.add_scatter(
+        x=df_metrics[DATE_COL],
+        y=df_metrics['mean_normalized'],
+        mode='lines',
+        customdata=df_metrics['mean'],
+        hovertemplate='%{customdata}',
+        fill='tozeroy',
+        name='Среднее',
+        line=dict(color='rgb(16, 191, 247)', width=5),
+    )
 
     # create the bar chart
-    fig.add_bar(
+    fig.add_scatter(
         x=df_metrics[DATE_COL],
         y=df_metrics['answ_normalized'],
         hovertext=df_metrics[EVENTS],
-        hovertemplate='%{y}<br>Что было: %{hovertext}',
+        hovertemplate='%{y}<br><br>Что было:<br>%{hovertext}',
         hoverinfo='text',
+        mode='lines+markers',
+        line=dict(color='rgb(255, 255, 124)', width=2),
+        marker=dict(color='rgb(255, 255, 124)', size=12, symbol='diamond'),
+        connectgaps=False,
+        name='Твоя оценка'
     )
-
-    # add a line trace for the average
-    fig.add_scatter(x=df_metrics[DATE_COL], y=df_metrics['mean_normalized'], mode='lines')
 
     fig.update_layout(
         yaxis = dict(
@@ -115,21 +116,23 @@ def make_plot(data, user_id, date_start, date_end):
         ),
         xaxis = dict(
             tickvals = df_metrics[DATE_COL],
-            ticktext = df_metrics[DATE_COL].apply(lambda x: datetime.strftime(x, DATE_PLOT_FORMAT))
+            ticktext = df_metrics[DATE_COL].apply(lambda x: datetime.strftime(x, DATE_PLOT_FORMAT)),
         )
     )
-    fig.update_layout(template=plot_template)
 
-    fig.update_yaxes(range=[0,5])
+    fig.update_yaxes(range=[0.8,5.2])
     fig.update_layout(bargap=0.0)
-    fig.update_layout(hovermode="x unified")
-#     #fig.add_hrect(y0=3, y1=5, line_width=0, fillcolor='rgb(119, 150, 109)', opacity=0.3, layer='below')
-# #     fig.add_hrect(y0=1, y1=3, line_width=0, fillcolor='rgb(78, 159, 61)', opacity=0.99, layer='below')
-# #     fig.add_hrect(y0=0, y1=1, line_width=0, fillcolor='rgb(216, 233, 168)', opacity=0.99, layer='below')
+    fig.update_layout(hovermode='x unified')
 
-    return fig.to_html(include_plotlyjs='cdn', post_script="document.querySelector('body').style.margin = '0px'; window.dispatchEvent(new Event('resize'));")
+    return fig.to_html(
+        include_plotlyjs='cdn',
+        post_script="document.querySelector('body').style.margin = '0px'; window.dispatchEvent(new Event('resize'));"
+    )
 
 if __name__ == '__main__':
+    import locale
+    locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
+
     import pandas as pd
     import sys
 

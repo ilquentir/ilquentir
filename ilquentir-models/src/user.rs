@@ -53,10 +53,14 @@ RETURNING tg_id, active
         Ok(sqlx::query_as!(
             Self,
             r#"
-INSERT INTO users (tg_id, active)
-VALUES ($1, false)
-ON CONFLICT (tg_id) DO UPDATE SET active = false
-RETURNING tg_id, active
+UPDATE
+    users
+SET
+    active = false
+WHERE
+    tg_id = $1
+RETURNING
+    tg_id, active
             "#,
             user_id,
         )

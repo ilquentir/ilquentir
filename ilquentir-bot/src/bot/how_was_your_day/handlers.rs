@@ -4,58 +4,41 @@ use color_eyre::Result;
 use sqlx::PgPool;
 use teloxide::{payloads::SendMessageSetters, requests::Requester};
 
-use ilquentir_config::Config;
-use ilquentir_graphs::{daily::chart_daily_stats, weekly::personal_weekly_stat};
 use ilquentir_messages::md_message;
-use ilquentir_models::{Poll, PollKind, PollStat, PollWeeklyUserStat};
+use ilquentir_models::{Poll, PollKind, User};
 
 use crate::bot::{daily_events, helpers::set_typing, Bot};
 
-#[tracing::instrument(skip(bot, pool, config), err)]
-pub async fn poll_answered(bot: &Bot, pool: &PgPool, poll: &Poll, config: Config) -> Result<()> {
+#[tracing::instrument(skip(bot, pool), err)]
+pub async fn poll_answered(bot: &Bot, pool: &PgPool, poll: &Poll) -> Result<()> {
     let chat_id = poll.chat_tg_id;
     let kind = poll.kind;
-    let publication_date = poll.publication_date;
-
-    let bot_clone = bot.clone();
-    let pool_clone = pool.clone();
-    tokio::spawn(async move {
-        let delay = publication_date + config.reply_delay - time::OffsetDateTime::now_utc();
-        if delay.is_positive() {
-            tokio::time::sleep(delay.unsigned_abs()).await;
-        } else {
-            tokio::time::sleep(config.min_reply_delay).await;
-        }
-
-        let stats = PollStat::get_today_stats(&mut pool_clone.begin().await.unwrap(), kind)
-            .await
-            .unwrap();
-        let graph = chart_daily_stats(&stats).unwrap();
-
-        let message_text = md_message!("voted_poll_reaction/stats_for_today.md", graph = graph);
-
-        bot_clone
-            .send_message(chat_id.to_string(), message_text)
-            .await
-            .unwrap();
-    });
 
     set_typing(bot, chat_id.to_string(), Some(Duration::from_millis(200))).await?;
 
-    let your_stat = PollWeeklyUserStat::get_for_last_week(
-        &mut pool.begin().await?,
-        PollKind::HowWasYourDay,
-        chat_id,
-    )
-    .await?;
-    let your_stat_descr = personal_weekly_stat(&your_stat);
+    if User::count_answered_polls(&mut pool.begin().await?, chat_id, kind).await? == 1 {
+        // onboarding
+        bot.send_message(
+            chat_id.to_string(),
+            md_message!("onboarding/step_4_after_response.md"),
+        )
+        .await?;
+        set_typing(bot, chat_id.to_string(), Some(Duration::from_millis(1000))).await?;
 
+        bot.send_message(
+            chat_id.to_string(),
+            md_message!("onboarding/step_5_after_response.md")
+        )
+        .reply_markup(daily_events::keyboard::promo())
+        .await?;
+
+        return Ok(());
+    }
+
+    // main flow
     bot.send_message(
         chat_id.to_string(),
-        md_message!(
-            "voted_poll_reaction/generic_response.md",
-            your_stat_descr = your_stat_descr,
-        ),
+        md_message!("promo/interactive_graphs.md"),
     )
     .await?;
 
