@@ -72,8 +72,8 @@ pub async fn overdue_poll(bot: &Bot, txn: &mut PgTransaction<'_>, poll: Poll) ->
         let response = bot.delete_message(poll.chat_tg_id.to_string(), MessageId(message_id))
             .await;
 
-        if let Err(e) = response {
-            warn!(err, "failed to delete obsolete message");
+        if let Err(err) = response {
+            warn!(%err, "failed to delete obsolete message");
         }
     } else {
         info!(poll = poll.id, "post with unknown message id is overdue")
