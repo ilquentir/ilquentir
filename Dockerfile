@@ -8,7 +8,7 @@ RUN cargo +nightly-2022-11-17 build -p ilquentir-bot --release -Z sparse-registr
 FROM debian:buster-slim
 ENV LC_ALL="ru_RU.UTF-8"
 ENV LC_CTYPE="ru_RU.UTF-8"
-RUN apt-get update && apt-get install locales
+RUN apt-get update && apt-get install locales  --assume-yes
 
 COPY ilquentir-python-graph/python/requirements.txt /requirements.txt
 RUN apt-get update \
