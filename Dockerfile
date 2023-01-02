@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install protobuf-compiler --assume-yes
 COPY . .
 RUN cargo +nightly-2022-11-17 build -p ilquentir-bot --release -Z sparse-registry
 
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 ENV LC_ALL="ru_RU.UTF-8"
 ENV LC_CTYPE="ru_RU.UTF-8"
 RUN apt-get update && apt-get install locales --assume-yes
