@@ -130,9 +130,6 @@ def make_plot(data, user_id, date_start, date_end):
     )
 
 if __name__ == '__main__':
-    import locale
-    locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
-
     import pandas as pd
     import sys
 
