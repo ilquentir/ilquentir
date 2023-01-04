@@ -29,5 +29,7 @@ pub async fn handle_ban(pool: PgPool, member_info: ChatMemberUpdated, me: Me) ->
         member_info.chat.username()
     );
 
+    txn.commit().await?;
+
     Ok(())
 }
