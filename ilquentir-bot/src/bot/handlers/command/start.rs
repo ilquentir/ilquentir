@@ -55,16 +55,6 @@ pub async fn handle_start(bot: &Bot, txn: &mut PgTransaction<'_>, chat_id: ChatI
         .await?;
     set_typing(bot, chat_id, Some(Duration::from_millis(1000))).await?;
 
-    bot.send_message(
-        chat_id,
-        md!(
-            r#"Я помогу тебе трекать своё состояние ежедневно и замечать тренды.
-
-Раз в неделю я буду присылать подробную стату про тебя и прошедшую неделю."#
-        ),
-    )
-    .await?;
-
     info!(
         chat_id = chat_id.0,
         user_id = user.tg_id,
