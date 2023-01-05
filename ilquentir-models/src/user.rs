@@ -12,7 +12,7 @@ pub struct User {
 
 impl User {
     #[tracing::instrument(skip(txn), err)]
-    pub async fn get_user_by_id(txn: &mut PgTransaction<'_>, user_id: i64) -> Result<Option<Self>> {
+    pub async fn get_user_by_id(txn: &mut PgTransaction<'_>, user_tg_id: i64) -> Result<Option<Self>> {
         Ok(sqlx::query_as!(
             Self,
             r#"
@@ -22,14 +22,14 @@ WHERE
     tg_id = $1
     AND active
             "#,
-            user_id,
+            user_tg_id,
         )
         .fetch_optional(&mut *txn)
         .await?)
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn activate(txn: &mut PgTransaction<'_>, user_id: i64) -> Result<Self> {
+    pub async fn activate(txn: &mut PgTransaction<'_>, user_tg_id: i64) -> Result<Self> {
         Ok(sqlx::query_as!(
             Self,
             r#"
@@ -38,16 +38,16 @@ VALUES ($1, true)
 ON CONFLICT (tg_id) DO UPDATE SET active = true
 RETURNING tg_id, active
             "#,
-            user_id,
+            user_tg_id,
         )
         .fetch_one(txn)
         .await?)
     }
 
     #[tracing::instrument(skip(txn), err)]
-    pub async fn deactivate(txn: &mut PgTransaction<'_>, user_id: i64) -> Result<Self> {
+    pub async fn deactivate(txn: &mut PgTransaction<'_>, user_tg_id: i64) -> Result<Self> {
         for kind in PollKind::iter() {
-            Poll::disable_pending_for_user(&mut *txn, user_id, kind).await?;
+            Poll::disable_pending_for_user(&mut *txn, user_tg_id, kind).await?;
         }
 
         Ok(sqlx::query_as!(
@@ -62,7 +62,7 @@ WHERE
 RETURNING
     tg_id, active
             "#,
-            user_id,
+            user_tg_id,
         )
         .fetch_one(txn)
         .await?)
@@ -71,7 +71,7 @@ RETURNING
     #[tracing::instrument(skip(txn), err)]
     pub async fn count_answered_polls(
         txn: &mut PgTransaction<'_>,
-        user_id: i64,
+        user_tg_id: i64,
         kind: PollKind,
     ) -> Result<i64> {
         Ok(sqlx::query!(
@@ -88,7 +88,7 @@ WHERE
     poll.chat_tg_id = $1
     AND poll.kind = $2
             "#,
-            user_id,
+            user_tg_id,
             kind.to_string(),
         )
         .fetch_one(txn)

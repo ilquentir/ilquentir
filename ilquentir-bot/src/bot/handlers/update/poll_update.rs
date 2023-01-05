@@ -18,16 +18,16 @@ pub async fn handle_poll_update(
     update: Update,
     tg_poll: TgPoll,
 ) -> Result<()> {
-    let user_id = update.user().map(|u| u.id.0);
+    let user_tg_id = update.user().map(|u| u.id.0);
     let chat_id = update.chat().map(|c| c.id);
     let chat_id_trace = chat_id.map(|c_id| c_id.0);
 
-    info!(user_id, chat_id = chat_id_trace, "start processing update");
+    info!(user_tg_id, chat_id = chat_id_trace, "start processing update");
 
     info!(
-        user_id,
+        user_tg_id,
         chat_id = chat_id_trace,
-        poll_id = tg_poll.id,
+        poll_tg_id = tg_poll.id,
         "got Poll update, saving data"
     );
 
@@ -35,9 +35,10 @@ pub async fn handle_poll_update(
 
     let poll = PollAnswer::save_answer(&mut txn, &tg_poll).await?;
     info!(
-        user_id,
+        user_tg_id,
         chat_id = chat_id_trace,
-        poll_id = poll.tg_id,
+        poll_tg_id = poll.tg_id,
+        poll_id = poll.id,
         "data saved, sending the reply"
     );
 
@@ -56,11 +57,11 @@ pub async fn handle_poll_update(
     //     Ok("https://media0.giphy.com/media/X3Yj4XXXieKYM/giphy-loop.mp4?cid=fd4c87ca9b02f849d4548fc9530a2dbe6e058599dc2630af&rid=giphy-loop.mp4&ct=g".parse().unwrap())
     // })?;
 
-    // info!(user_id, chat_id = chat_id.0, "sending cat gif");
+    // info!(user_tg_id, chat_id = chat_id.0, "sending cat gif");
     // bot.send_animation(chat_id.to_string(), InputFile::url(cat_gif))
     //     .await?;
 
-    info!(user_id, chat_id = chat_id.0, "sending message");
+    info!(user_tg_id, chat_id = chat_id.0, "sending message");
     match poll.kind {
         PollKind::HowWasYourDay => how_was_your_day::poll_answered(&bot, &pool, &poll).await?,
         PollKind::FoodAllergy => {
@@ -71,9 +72,10 @@ pub async fn handle_poll_update(
     };
 
     info!(
-        user_id,
+        user_tg_id,
         chat_id = chat_id_trace,
-        poll_id = poll.tg_id,
+        poll_tg_id = poll.tg_id,
+        poll_id = poll.id,
         "reply sent, commiting txn"
     );
 

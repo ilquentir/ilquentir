@@ -1,6 +1,6 @@
-def make_plot(data, user_id, date_start, date_end):
+def make_plot(data, user_tg_id, date_start, date_end):
     '''
-    Takes data as pandas DataFrame, user_id as int
+    Takes data as pandas DataFrame, user_tg_id as int
     and date_start, date_end as string in format '%Y-%m-%d'.
 
     Returns string with html plot representation.
@@ -74,7 +74,7 @@ def make_plot(data, user_id, date_start, date_end):
     ).round(2)
 
     df_metrics = df_metrics.join(
-        df[df[USER_COL] == user_id].set_index(DATE_COL)[[ANSW_COL, EVENTS]].round(0)
+        df[df[USER_COL] == user_tg_id].set_index(DATE_COL)[[ANSW_COL, EVENTS]].round(0)
     ).reset_index()
 
     df_metrics['answ_normalized'] = df_metrics[ANSW_COL] + 3

@@ -97,7 +97,7 @@ pub async fn handle_scheduled_delivery(bot: &Bot, pool: &PgPool) -> Result<()> {
     for poll in polls {
         info!(
             poll_id = poll.id,
-            user_id = poll.chat_tg_id,
+            user_tg_id = poll.chat_tg_id,
             "sending scheduled poll"
         );
 
@@ -132,7 +132,7 @@ pub async fn handle_scheduled_overdue(bot: &Bot, pool: &PgPool) -> Result<()> {
         for poll in polls {
             info!(
                 poll_id = poll.id,
-                user_id = poll.chat_tg_id,
+                user_tg_id = poll.chat_tg_id,
                 "sending scheduled poll"
             );
 

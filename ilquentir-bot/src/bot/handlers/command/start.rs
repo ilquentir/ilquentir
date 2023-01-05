@@ -19,7 +19,7 @@ pub async fn handle_start(bot: &Bot, txn: &mut PgTransaction<'_>, chat_id: ChatI
     if let Some(user) = User::get_user_by_id(&mut *txn, chat_id.0).await? {
         info!(
             chat_id = chat_id.0,
-            user_id = user.tg_id,
+            user_tg_id = user.tg_id,
             "user already exists and active :)"
         );
 
@@ -32,7 +32,7 @@ pub async fn handle_start(bot: &Bot, txn: &mut PgTransaction<'_>, chat_id: ChatI
     let user = User::activate(&mut *txn, chat_id.0).await?;
     info!(
         chat_id = chat_id.0,
-        user_id = user.tg_id,
+        user_tg_id = user.tg_id,
         "(re?) activated user"
     );
 
@@ -40,7 +40,7 @@ pub async fn handle_start(bot: &Bot, txn: &mut PgTransaction<'_>, chat_id: ChatI
 
     info!(
         chat_id = chat_id.0,
-        user_id = user.tg_id,
+        user_tg_id = user.tg_id,
         "sending welcome sequence to user"
     );
     bot.send_message(chat_id, md_message!("onboarding/step_1.md"))
@@ -57,7 +57,7 @@ pub async fn handle_start(bot: &Bot, txn: &mut PgTransaction<'_>, chat_id: ChatI
 
     info!(
         chat_id = chat_id.0,
-        user_id = user.tg_id,
+        user_tg_id = user.tg_id,
         "sent welcome sequence, sending {} initial polls",
         polls.len(),
     );
@@ -69,7 +69,7 @@ pub async fn handle_start(bot: &Bot, txn: &mut PgTransaction<'_>, chat_id: ChatI
 
     info!(
         chat_id = chat_id.0,
-        user_id = user.tg_id,
+        user_tg_id = user.tg_id,
         "initial polls sent"
     );
 

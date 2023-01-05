@@ -389,7 +389,7 @@ WHERE
                 if let MediaKind::Poll(tg_poll) = message_common.media_kind {
                     debug!(
                         poll_id = prev_id,
-                        user_id = poll.chat_tg_id,
+                        user_tg_id = poll.chat_tg_id,
                         poll_tg_id = tg_poll.poll.id,
                         "poll sent"
                     );
@@ -408,7 +408,7 @@ WHERE
 
                     debug!(
                         poll_id = poll.id,
-                        user_id = poll.chat_tg_id,
+                        user_tg_id = poll.chat_tg_id,
                         poll_tg_id = tg_poll.poll.id,
                         "saved that poll is published"
                     );
@@ -428,7 +428,7 @@ WHERE
         info!(
             poll_id = prev_id,
             next_poll_id = next_poll.id,
-            user_id = next_poll.chat_tg_id,
+            user_tg_id = next_poll.chat_tg_id,
             "scheduled new poll"
         );
 
