@@ -102,8 +102,35 @@ RETURNING
         .await?)
     }
 
+    #[tracing::instrument(skip(txn), err, ret)]
+    async fn exists_next(&self, txn: &mut PgTransaction<'_>) -> Result<bool> {
+        Ok(sqlx::query!(
+            r#"
+SELECT
+    id
+FROM
+    polls
+WHERE
+    NOT published
+    AND kind = $1
+    AND publication_date > $2
+            "#,
+            self.kind.to_string(),
+            self.publication_date
+        )
+        .fetch_optional(txn)
+        .await?
+        .is_some())
+    }
+
     #[tracing::instrument(skip(txn), err)]
     pub async fn schedule_next(self, txn: &mut PgTransaction<'_>) -> Result<Self> {
+        if self.exists_next(txn).await? {
+            warn!("trying to schedule next poll while there is already one scheduled");
+
+            return Ok(self);
+        }
+
         // try get custom sending time
         let next_at = self
             .kind
