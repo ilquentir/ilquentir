@@ -445,6 +445,27 @@
     },
     "query": "\nSELECT\n    COUNT(DISTINCT poll.tg_id) as \"n_answered!\"\nFROM\n    polls AS poll\nJOIN\n    poll_answers AS answer\nON\n    poll.tg_id = answer.poll_tg_id\nWHERE\n    poll.chat_tg_id = $1\n    AND poll.kind = $2\n            "
   },
+  "926bc7717fffbbef11b0b11f5b9f109ede6cda097be2a526bc77f9359fbe701e": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Timestamptz"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    id\nFROM\n    polls\nWHERE\n    NOT published\n    AND kind = $1\n    AND publication_date > $2\n            "
+  },
   "a99cff23f91312be41793eaa9d11f7fd256e950762713c12ebc5f011cd7faa76": {
     "describe": {
       "columns": [
