@@ -12,7 +12,10 @@ pub struct User {
 
 impl User {
     #[tracing::instrument(skip(txn), err)]
-    pub async fn get_user_by_id(txn: &mut PgTransaction<'_>, user_tg_id: i64) -> Result<Option<Self>> {
+    pub async fn get_user_by_id(
+        txn: &mut PgTransaction<'_>,
+        user_tg_id: i64,
+    ) -> Result<Option<Self>> {
         Ok(sqlx::query_as!(
             Self,
             r#"

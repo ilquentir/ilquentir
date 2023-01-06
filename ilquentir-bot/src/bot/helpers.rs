@@ -69,7 +69,8 @@ pub async fn overdue_poll(bot: &Bot, txn: &mut PgTransaction<'_>, poll: Poll) ->
     };
 
     if let Some(message_id) = poll.tg_message_id {
-        let response = bot.delete_message(poll.chat_tg_id.to_string(), MessageId(message_id))
+        let response = bot
+            .delete_message(poll.chat_tg_id.to_string(), MessageId(message_id))
             .await;
 
         if let Err(err) = response {

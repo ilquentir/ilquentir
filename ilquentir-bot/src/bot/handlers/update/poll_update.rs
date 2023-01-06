@@ -22,7 +22,11 @@ pub async fn handle_poll_update(
     let chat_id = update.chat().map(|c| c.id);
     let chat_id_trace = chat_id.map(|c_id| c_id.0);
 
-    info!(user_tg_id, chat_id = chat_id_trace, "start processing update");
+    info!(
+        user_tg_id,
+        chat_id = chat_id_trace,
+        "start processing update"
+    );
 
     info!(
         user_tg_id,

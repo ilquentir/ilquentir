@@ -114,9 +114,11 @@ WHERE
     NOT published
     AND kind = $1
     AND publication_date > $2
+    AND chat_tg_id = $3
             "#,
             self.kind.to_string(),
-            self.publication_date
+            self.publication_date,
+            self.chat_tg_id,
         )
         .fetch_optional(txn)
         .await?
