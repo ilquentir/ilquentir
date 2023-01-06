@@ -133,6 +133,28 @@
     },
     "query": "\nDELETE FROM polls\nWHERE\n    NOT published\n    AND publication_date > NOW()\n    AND chat_tg_id = $1\n    AND kind = $2\n            "
   },
+  "1c3a0ef0f0c222cd653b4a29c6dad790468b1c1ccad9f429876f56a5214481d6": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Timestamptz",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    id\nFROM\n    polls\nWHERE\n    NOT published\n    AND kind = $1\n    AND publication_date > $2\n    AND chat_tg_id = $3\n            "
+  },
   "1c3c72718d5686d407ffd03a4de46f7d0188e441f8ea2dd1efe2f48155eff1ce": {
     "describe": {
       "columns": [
@@ -444,27 +466,6 @@
       }
     },
     "query": "\nSELECT\n    COUNT(DISTINCT poll.tg_id) as \"n_answered!\"\nFROM\n    polls AS poll\nJOIN\n    poll_answers AS answer\nON\n    poll.tg_id = answer.poll_tg_id\nWHERE\n    poll.chat_tg_id = $1\n    AND poll.kind = $2\n            "
-  },
-  "926bc7717fffbbef11b0b11f5b9f109ede6cda097be2a526bc77f9359fbe701e": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int8"
-        }
-      ],
-      "nullable": [
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Timestamptz"
-        ]
-      }
-    },
-    "query": "\nSELECT\n    id\nFROM\n    polls\nWHERE\n    NOT published\n    AND kind = $1\n    AND publication_date > $2\n            "
   },
   "a99cff23f91312be41793eaa9d11f7fd256e950762713c12ebc5f011cd7faa76": {
     "describe": {
