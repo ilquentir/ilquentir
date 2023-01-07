@@ -249,7 +249,7 @@ WHERE
         )
         .fetch_all(txn)
         .await?;
-        polls.sort_unstable_by_key(|poll| poll.kind);
+        polls.sort_unstable_by_key(|poll| (poll.chat_tg_id, poll.kind));
 
         Ok(polls)
     }
