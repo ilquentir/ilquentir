@@ -29,10 +29,15 @@ pub fn setup(config: &Config) -> Result<()> {
                 .with_metadata(map),
         )
         .with_trace_config(
-            trace::config().with_resource(Resource::new(vec![KeyValue::new(
-                "service.name",
-                format!("ilquentir-{environment}"),
-            )])),
+            trace::config()
+                .with_resource(Resource::new(vec![KeyValue::new(
+                    "service.name",
+                    format!("ilquentir-{environment}"),
+                )]))
+                .with_span_limits(trace::SpanLimits {
+                    max_events_per_span: 1024,
+                    ..Default::default()
+                }),
         )
         .install_batch(opentelemetry::runtime::Tokio)?;
     let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);

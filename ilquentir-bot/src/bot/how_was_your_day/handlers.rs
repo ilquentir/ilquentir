@@ -38,7 +38,7 @@ pub async fn poll_answered(bot: &Bot, pool: &PgPool, poll: &Poll) -> Result<()> 
     // main flow
     bot.send_message(
         chat_id.to_string(),
-        md_message!("promo/ny_help.md"),
+        md_message!("voted_poll_reaction/generic_response.md"),
     )
     .await?;
 
