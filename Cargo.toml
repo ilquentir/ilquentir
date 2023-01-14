@@ -2,13 +2,13 @@
 members = [
     'ilquentir-bot',
     'ilquentir-config',
-    'ilquentir-giphy',
     'ilquentir-messages',
     'ilquentir-models',
+    'ilquentir-python-graph',
 ]
 
 [workspace.package]
-version = "0.7.2"
+version = "0.8.0"
 authors = ["utterstep"]
 
 [workspace.dependencies]
@@ -20,11 +20,10 @@ once_cell = "1"
 tracing = "0.1"
 tracing-tree = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "parking_lot"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "parking_lot"] }
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
 strum = { version = "0.24", features = ["derive"] }
-time = { version = "0.3", features = ["macros", "formatting"] }
+time = { version = "0.3", features = ["macros", "formatting", "serde"] }
 url = "2"
 
 [workspace.dependencies.sqlx]
@@ -41,4 +40,15 @@ features = [
     "trace-adaptor",
     "macros",
     "erased",
+]
+
+[workspace.dependencies.tokio]
+version = "1"
+features = [
+    "macros",
+    "rt-multi-thread",
+    "time",
+    "parking_lot",
+    "process",
+    "fs",
 ]

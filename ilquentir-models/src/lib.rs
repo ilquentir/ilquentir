@@ -12,16 +12,13 @@ pub use poll_kind::PollKind;
 mod poll_settings;
 pub use poll_settings::PollSettings;
 
-mod poll_stat;
-pub use poll_stat::PollStat;
-
-mod poll_weekly_user_stat;
-pub use poll_weekly_user_stat::PollWeeklyUserStat;
-
 mod poll;
 pub use poll::Poll;
 
 mod user;
 pub use user::User;
+
+mod wide_how_was_your_day;
+pub use wide_how_was_your_day::WideHowWasYourDay;
 
 pub type PgTransaction<'t> = Transaction<'t, Postgres>;

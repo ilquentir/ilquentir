@@ -84,6 +84,42 @@
     },
     "query": "\nSELECT\n    id\nFROM\n    poll_custom_options\nWHERE\n    poll_kind = $1\n    AND user_tg_id = $2\n    AND option_text = $3\n            "
   },
+  "11ea65cd1a81dd13daa9f0ac4ded29dec5a6392fdd99f593ae02b64efa8bc053": {
+    "describe": {
+      "columns": [
+        {
+          "name": "poll_date_about!",
+          "ordinal": 0,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "user_tg_id!",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "answer_selected_value?",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "events",
+          "ordinal": 3,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        null,
+        true,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\nSELECT\n    date_trunc('day', polls.publication_date - INTERVAL '12 hours') as \"poll_date_about!\",\n    polls.chat_tg_id as \"user_tg_id!\",\n    poll_answers.selected_value as \"answer_selected_value?\",\n    event_polls.events\nFROM polls\nLEFT JOIN\n    poll_answers\nON\n    polls.tg_id = poll_answers.poll_tg_id\nLEFT JOIN\n(\n    SELECT\n        polls.publication_date,\n        polls.chat_tg_id as chat_tg_id,\n        ARRAY_TO_STRING(ARRAY_AGG('• ' || poll_answers.selected_value_text), ',<br>') as \"events\"\n    FROM polls\n    JOIN\n        poll_answers\n    ON\n        polls.tg_id = poll_answers.poll_tg_id\n    WHERE\n        polls.published\n        AND polls.kind = 'daily_events'\n    GROUP BY\n        polls.publication_date,\n        polls.chat_tg_id\n    ) event_polls\nON\n    polls.chat_tg_id = event_polls.chat_tg_id\n    AND polls.publication_date = event_polls.publication_date\nWHERE\n    polls.published\n    AND polls.kind = 'how_was_your_day'\n            "
+  },
   "12818c8e1c7265ff034a6bef9c0ead32671a713f78222721b3a3e125e9ab370c": {
     "describe": {
       "columns": [],
@@ -96,6 +132,28 @@
       }
     },
     "query": "\nDELETE FROM polls\nWHERE\n    NOT published\n    AND publication_date > NOW()\n    AND chat_tg_id = $1\n    AND kind = $2\n            "
+  },
+  "1c3a0ef0f0c222cd653b4a29c6dad790468b1c1ccad9f429876f56a5214481d6": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Timestamptz",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    id\nFROM\n    polls\nWHERE\n    NOT published\n    AND kind = $1\n    AND publication_date > $2\n    AND chat_tg_id = $3\n            "
   },
   "1c3c72718d5686d407ffd03a4de46f7d0188e441f8ea2dd1efe2f48155eff1ce": {
     "describe": {
@@ -692,32 +750,6 @@
     },
     "query": "\nSELECT\n    id as \"id?\",\n    tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nWHERE\n    tg_id = $1\n            "
   },
-  "dae6e58fb74c36560936d2b11a8de0680c5c8af0b2e86d7a098321bee9d2efec": {
-    "describe": {
-      "columns": [
-        {
-          "name": "tg_id",
-          "ordinal": 0,
-          "type_info": "Int8"
-        },
-        {
-          "name": "active",
-          "ordinal": 1,
-          "type_info": "Bool"
-        }
-      ],
-      "nullable": [
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Int8"
-        ]
-      }
-    },
-    "query": "\nINSERT INTO users (tg_id, active)\nVALUES ($1, false)\nON CONFLICT (tg_id) DO UPDATE SET active = false\nRETURNING tg_id, active\n            "
-  },
   "e2819c3f53c6cd86c649306e1cd9176876c6dc42c0b94543a8e955a9ea5de747": {
     "describe": {
       "columns": [
@@ -750,5 +782,31 @@
       }
     },
     "query": "\nSELECT\n    polls.kind as \"kind: PollKind\",\n    DATE(polls.publication_date) as \"date!\",\n    poll_answers.selected_value\nFROM poll_answers\nJOIN polls\nON poll_answers.poll_tg_id = polls.tg_id\nWHERE\n    polls.kind = $1\n    AND polls.chat_tg_id = $2\n    AND polls.publication_date BETWEEN NOW() - interval '8 days' AND NOW() - interval '1 minute'\nORDER BY \"date!\"\n            "
+  },
+  "e52ec64d6dc0d58d48d990fa6d7239534a6e67024f0aeaeadfb71fb6587781e6": {
+    "describe": {
+      "columns": [
+        {
+          "name": "tg_id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "active",
+          "ordinal": 1,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\nUPDATE\n    users\nSET\n    active = false\nWHERE\n    tg_id = $1\nRETURNING\n    tg_id, active\n            "
   }
 }

@@ -97,13 +97,16 @@ pub async fn handle_scheduled_delivery(bot: &Bot, pool: &PgPool) -> Result<()> {
     for poll in polls {
         info!(
             poll_id = poll.id,
-            user_id = poll.chat_tg_id,
+            user_tg_id = poll.chat_tg_id,
             "sending scheduled poll"
         );
 
         let mut txn = pool.begin().await?;
 
-        send_poll(bot, &mut txn, poll).await?;
+        let send_result = send_poll(bot, &mut txn, poll).await;
+        if let Err(e) = send_result {
+            error!(error = %e, "got an error while sending");
+        };
 
         txn.commit().await?;
     }
@@ -129,13 +132,16 @@ pub async fn handle_scheduled_overdue(bot: &Bot, pool: &PgPool) -> Result<()> {
         for poll in polls {
             info!(
                 poll_id = poll.id,
-                user_id = poll.chat_tg_id,
+                user_tg_id = poll.chat_tg_id,
                 "sending scheduled poll"
             );
 
             let mut txn = pool.begin().await?;
 
-            overdue_poll(bot, &mut txn, poll).await?;
+            let overdue_result = overdue_poll(bot, &mut txn, poll).await;
+            if let Err(e) = overdue_result {
+                error!(error = %e, "got an error while processing overdue");
+            };
 
             txn.commit().await?;
         }

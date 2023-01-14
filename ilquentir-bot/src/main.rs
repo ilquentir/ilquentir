@@ -3,7 +3,6 @@ use sqlx::migrate::Migrator;
 use tracing::info;
 
 use ilquentir_config::Config;
-use ilquentir_giphy::GiphyApi;
 
 mod bot;
 mod scheduler;
@@ -22,9 +21,7 @@ async fn main() -> Result<()> {
     let pool = sqlx::PgPool::connect(&config.database_url).await?;
     MIGRATOR.run(&pool).await?;
 
-    let giphy = GiphyApi::new(&config.giphy_key)?;
-
-    let (mut dispatcher, bot) = create_bot_and_dispatcher(pool.clone(), giphy, &config).await?;
+    let (mut dispatcher, bot) = create_bot_and_dispatcher(pool.clone(), &config).await?;
     let scheduler = Scheduler::new(&dispatcher);
     let scheduler_shutdown_token = scheduler.shutdown_token();
 

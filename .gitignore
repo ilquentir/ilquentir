@@ -9,3 +9,6 @@ target
 
 # data export
 db_export
+
+# various CSV files
+*.csv

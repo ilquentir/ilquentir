@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 color-eyre = { workspace = true }
+serde = { workspace = true }
 sqlx = { workspace = true }
 strum = { workspace = true }
 teloxide = { workspace = true }

@@ -102,8 +102,37 @@ RETURNING
         .await?)
     }
 
+    #[tracing::instrument(skip(txn), err, ret)]
+    async fn exists_next(&self, txn: &mut PgTransaction<'_>) -> Result<bool> {
+        Ok(sqlx::query!(
+            r#"
+SELECT
+    id
+FROM
+    polls
+WHERE
+    NOT published
+    AND kind = $1
+    AND publication_date > $2
+    AND chat_tg_id = $3
+            "#,
+            self.kind.to_string(),
+            self.publication_date,
+            self.chat_tg_id,
+        )
+        .fetch_optional(txn)
+        .await?
+        .is_some())
+    }
+
     #[tracing::instrument(skip(txn), err)]
     pub async fn schedule_next(self, txn: &mut PgTransaction<'_>) -> Result<Self> {
+        if self.exists_next(txn).await? {
+            warn!("trying to schedule next poll while there is already one scheduled");
+
+            return Ok(self);
+        }
+
         // try get custom sending time
         let next_at = self
             .kind
@@ -220,7 +249,7 @@ WHERE
         )
         .fetch_all(txn)
         .await?;
-        polls.sort_unstable_by_key(|poll| poll.kind);
+        polls.sort_unstable_by_key(|poll| (poll.chat_tg_id, poll.kind));
 
         Ok(polls)
     }
@@ -362,7 +391,7 @@ WHERE
                 if let MediaKind::Poll(tg_poll) = message_common.media_kind {
                     debug!(
                         poll_id = prev_id,
-                        user_id = poll.chat_tg_id,
+                        user_tg_id = poll.chat_tg_id,
                         poll_tg_id = tg_poll.poll.id,
                         "poll sent"
                     );
@@ -381,7 +410,7 @@ WHERE
 
                     debug!(
                         poll_id = poll.id,
-                        user_id = poll.chat_tg_id,
+                        user_tg_id = poll.chat_tg_id,
                         poll_tg_id = tg_poll.poll.id,
                         "saved that poll is published"
                     );
@@ -401,7 +430,7 @@ WHERE
         info!(
             poll_id = prev_id,
             next_poll_id = next_poll.id,
-            user_id = next_poll.chat_tg_id,
+            user_tg_id = next_poll.chat_tg_id,
             "scheduled new poll"
         );
 

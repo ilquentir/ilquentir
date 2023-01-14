@@ -7,7 +7,7 @@ use teloxide::{
     requests::Requester,
     types::{Message, MessageId, Recipient},
 };
-use tracing::info;
+use tracing::{info, warn};
 
 use super::Bot;
 
@@ -69,8 +69,13 @@ pub async fn overdue_poll(bot: &Bot, txn: &mut PgTransaction<'_>, poll: Poll) ->
     };
 
     if let Some(message_id) = poll.tg_message_id {
-        bot.delete_message(poll.chat_tg_id.to_string(), MessageId(message_id))
-            .await?;
+        let response = bot
+            .delete_message(poll.chat_tg_id.to_string(), MessageId(message_id))
+            .await;
+
+        if let Err(err) = response {
+            warn!(%err, "failed to delete obsolete message");
+        }
     } else {
         info!(poll = poll.id, "post with unknown message id is overdue")
     }
