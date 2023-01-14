@@ -9,7 +9,6 @@ edition = "2021"
 [dependencies]
 # intra-workspace dependencies
 ilquentir-config = { path = "../ilquentir-config" }
-ilquentir-graphs = { path = "../ilquentir-graphs" }
 ilquentir-messages = { path = "../ilquentir-messages" }
 ilquentir-models = { path = "../ilquentir-models" }
 ilquentir-python-graph = { path = "../ilquentir-python-graph" }
