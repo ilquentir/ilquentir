@@ -81,6 +81,8 @@ pub async fn handle_callback(
         }
     } else if options::NONE_BUTTON.matches(payload) {
         if current.options.is_empty() {
+            bot.answer_callback_query(&callback.id).await?;
+
             return Ok(());
         }
 
@@ -110,10 +112,6 @@ pub async fn handle_promo_callback(
     payload: &str,
 ) -> Result<()> {
     let user_tg_id = callback.from.id.0 as i64;
-    // let message = callback
-    //     .message
-    //     .as_ref()
-    //     .ok_or_else(|| eyre!("payload with no message"))?;
     const POLL_KIND: PollKind = PollKind::DailyEvents;
 
     if options::PROMO_NO_BUTTON.matches(payload) {

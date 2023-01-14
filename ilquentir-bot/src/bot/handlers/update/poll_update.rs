@@ -52,19 +52,6 @@ pub async fn handle_poll_update(
     let chat_id = ChatId(poll.chat_tg_id);
 
     // send generic response
-    // let cat_gif = tokio::time::timeout(
-    //     Duration::from_secs(2),
-    //     giphy.get_random_cat_gif()
-    // ).await.unwrap_or_else(|_| {
-    //     warn!("timeout while requesting GIPHY api");
-
-    //     Ok("https://media0.giphy.com/media/X3Yj4XXXieKYM/giphy-loop.mp4?cid=fd4c87ca9b02f849d4548fc9530a2dbe6e058599dc2630af&rid=giphy-loop.mp4&ct=g".parse().unwrap())
-    // })?;
-
-    // info!(user_tg_id, chat_id = chat_id.0, "sending cat gif");
-    // bot.send_animation(chat_id.to_string(), InputFile::url(cat_gif))
-    //     .await?;
-
     info!(user_tg_id, chat_id = chat_id.0, "sending message");
     match poll.kind {
         PollKind::HowWasYourDay => how_was_your_day::poll_answered(&bot, &pool, &poll).await?,
