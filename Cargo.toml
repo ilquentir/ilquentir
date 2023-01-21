@@ -1,10 +1,10 @@
 [workspace]
 members = [
-    'ilquentir-bot',
-    'ilquentir-config',
-    'ilquentir-messages',
-    'ilquentir-models',
-    'ilquentir-python-graph',
+    "ilquentir-bot",
+    "ilquentir-config",
+    "ilquentir-messages",
+    "ilquentir-models",
+    "ilquentir-python-graph",
 ]
 
 [workspace.package]

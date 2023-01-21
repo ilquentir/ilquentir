@@ -24,8 +24,6 @@ impl Deref for Config {
 pub struct ConfigInner {
     /// Url for database connection
     pub database_url: String,
-    /// API key for GIPHY
-    pub giphy_key: String,
     /// Specified environment
     pub environment: String,
     /// API key for Honeycomb
@@ -35,12 +33,6 @@ pub struct ConfigInner {
     /// Scheduler interval: how long should pauses be between updates
     #[serde(with = "humantime_serde")]
     pub scheduler_interval: Duration,
-    /// Response delay for today's summary
-    #[serde(with = "humantime_serde")]
-    pub reply_delay: Duration,
-    /// Minimal response delay for today's summary
-    #[serde(with = "humantime_serde", default = "default_min_reply_delay")]
-    pub min_reply_delay: Duration,
 
     /// Path for the wide_how_was_your_day export
     pub wide_how_was_your_day_path: PathBuf,
@@ -49,6 +41,15 @@ pub struct ConfigInner {
     pub wide_how_was_your_day_max_age: Duration,
     /// Path to python file, containing plotly graphing function
     pub plotly_python_code_file: PathBuf,
+
+    /// Response delay for today's summary
+    #[deprecated = "we do not send today's summary manually"]
+    #[serde(with = "humantime_serde")]
+    pub reply_delay: Duration,
+    /// Minimal response delay for today's summary
+    #[deprecated = "we do not send today's summary manually"]
+    #[serde(with = "humantime_serde", default = "default_min_reply_delay")]
+    pub min_reply_delay: Duration,
 }
 
 fn default_min_reply_delay() -> Duration {

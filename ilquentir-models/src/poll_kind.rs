@@ -124,6 +124,7 @@ impl PollKind {
                 "Shortness of breath",
                 "Itching",
                 "Bloating",
+                "Anxiety",
                 "Nope, nothing :)",
             ][..]
                 .iter()
