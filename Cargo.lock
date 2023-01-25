@@ -1383,7 +1383,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-bot"
-version = "0.8.2"
+version = "0.8.3"
 dependencies = [
  "color-eyre",
  "dotenvy",
@@ -1415,7 +1415,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-config"
-version = "0.8.2"
+version = "0.8.3"
 dependencies = [
  "color-eyre",
  "envy",
@@ -1425,7 +1425,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-messages"
-version = "0.8.2"
+version = "0.8.3"
 dependencies = [
  "once_cell",
  "pulldown-cmark",
@@ -1435,7 +1435,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-models"
-version = "0.8.2"
+version = "0.8.3"
 dependencies = [
  "color-eyre",
  "serde",
@@ -1448,7 +1448,7 @@ dependencies = [
 
 [[package]]
 name = "ilquentir-python-graph"
-version = "0.8.2"
+version = "0.8.3"
 dependencies = [
  "aws-config",
  "aws-sdk-s3",
