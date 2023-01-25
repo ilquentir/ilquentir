@@ -110,8 +110,8 @@
       ],
       "nullable": [
         null,
-        true,
         false,
+        true,
         true
       ],
       "parameters": {
@@ -237,44 +237,6 @@
       }
     },
     "query": "\nSELECT\n    id as \"id?\",\n    polls.tg_id as tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nJOIN users\nON\n    polls.chat_tg_id = users.tg_id\nWHERE\n    NOT polls.published\n    AND polls.publication_date > NOW()\n    AND users.active\n    AND users.tg_id = $1\n    AND polls.kind = $2\nORDER BY\n    polls.chat_tg_id\n            "
-  },
-  "4458a8af5c385abd3dfc12a5a4ab18d3c2412c027e501e68592cb13df7d8145b": {
-    "describe": {
-      "columns": [
-        {
-          "name": "kind: PollKind",
-          "ordinal": 0,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "date!",
-          "ordinal": 1,
-          "type_info": "Date"
-        },
-        {
-          "name": "selected_value",
-          "ordinal": 2,
-          "type_info": "Int4"
-        },
-        {
-          "name": "n_selected!",
-          "ordinal": 3,
-          "type_info": "Int8"
-        }
-      ],
-      "nullable": [
-        false,
-        null,
-        false,
-        null
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "\nSELECT\n    polls.kind as \"kind: PollKind\",\n    DATE(polls.publication_date - interval '12 hours') as \"date!\",\n    selected_value,\n    COUNT(poll_answers.id) as \"n_selected!\"\nFROM poll_answers\nJOIN polls\nON poll_answers.poll_tg_id = polls.tg_id\nWHERE\n    polls.kind = $1\n    AND DATE(polls.publication_date - interval '12 hours') = DATE(NOW() - interval '22 hours')\nGROUP BY\n    selected_value,\n    polls.kind,\n    DATE(polls.publication_date - interval '12 hours')\n            "
   },
   "445f0324236fa1133098266dcde3439dbc36e435714e0d8a97fe349aeee55124": {
     "describe": {
@@ -749,39 +711,6 @@
       }
     },
     "query": "\nSELECT\n    id as \"id?\",\n    tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\nFROM polls\nWHERE\n    tg_id = $1\n            "
-  },
-  "e2819c3f53c6cd86c649306e1cd9176876c6dc42c0b94543a8e955a9ea5de747": {
-    "describe": {
-      "columns": [
-        {
-          "name": "kind: PollKind",
-          "ordinal": 0,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "date!",
-          "ordinal": 1,
-          "type_info": "Date"
-        },
-        {
-          "name": "selected_value",
-          "ordinal": 2,
-          "type_info": "Int4"
-        }
-      ],
-      "nullable": [
-        false,
-        null,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Int8"
-        ]
-      }
-    },
-    "query": "\nSELECT\n    polls.kind as \"kind: PollKind\",\n    DATE(polls.publication_date) as \"date!\",\n    poll_answers.selected_value\nFROM poll_answers\nJOIN polls\nON poll_answers.poll_tg_id = polls.tg_id\nWHERE\n    polls.kind = $1\n    AND polls.chat_tg_id = $2\n    AND polls.publication_date BETWEEN NOW() - interval '8 days' AND NOW() - interval '1 minute'\nORDER BY \"date!\"\n            "
   },
   "e52ec64d6dc0d58d48d990fa6d7239534a6e67024f0aeaeadfb71fb6587781e6": {
     "describe": {
