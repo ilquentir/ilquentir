@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aws_sdk_s3::{types::ByteStream, Client, Endpoint, Region};
+use aws_sdk_s3::{types::ByteStream, Client, Region};
 use bytes::Bytes;
 use color_eyre::{eyre::ensure, Result};
 use csv_async::Terminator;
@@ -53,7 +53,7 @@ impl Plotter {
         const BUCKET: &str = "utterstep-public";
 
         let shared_config = aws_config::from_env()
-            .endpoint_resolver(Endpoint::immutable("https://fra1.digitaloceanspaces.com").unwrap())
+            .endpoint_url("https://fra1.digitaloceanspaces.com")
             .region(Region::new("fra1"))
             .load()
             .await;

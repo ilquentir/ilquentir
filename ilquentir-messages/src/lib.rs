@@ -101,11 +101,11 @@ mod tests {
         let graph = "123";
 
         assert_eq!(
-            message!("update/stats_for_today.md", graph = graph),
+            message!("test/stats_for_today.md", graph = graph),
             "Присылаю статистику по ответам всех за сегодня:\n\n```\n  %\n123\n```"
         );
         assert_eq!(
-            md_message!("update/stats_for_today.md", graph = graph),
+            md_message!("test/stats_for_today.md", graph = graph),
             "Присылаю статистику по ответам всех за сегодня:\n\n```\n  %\n123\n```"
         );
     }

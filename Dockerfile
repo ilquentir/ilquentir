@@ -1,4 +1,4 @@
-FROM rust:1.65 AS builder
+FROM rust:1.67 AS builder
 RUN rustup toolchain install nightly-2022-11-17
 RUN apt-get update && apt-get install protobuf-compiler --assume-yes
 
