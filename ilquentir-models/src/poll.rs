@@ -1,6 +1,9 @@
 use std::fmt::Debug;
 
-use color_eyre::{eyre::eyre, Result};
+use color_eyre::{
+    eyre::{bail, eyre},
+    Result,
+};
 use sqlx::FromRow;
 use time::OffsetDateTime;
 use tracing::{debug, error, info, warn};
@@ -420,9 +423,7 @@ WHERE
                     ?message,
                     "got some weird message in response to SendPoll request"
                 );
-                return Err(color_eyre::eyre::eyre!(
-                    "got some weird message in response to SendPoll request"
-                ));
+                bail!("got some weird message in response to SendPoll request");
             }
         }
 

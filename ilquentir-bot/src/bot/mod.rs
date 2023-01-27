@@ -5,7 +5,7 @@ use teloxide::{
     dispatching::{DefaultKey, HandlerExt, UpdateFilterExt},
     prelude::Dispatcher as TgDispatcher,
     requests::{Requester, RequesterExt},
-    types::{Message, MessageKind, ParseMode, Update, UpdateKind},
+    types::{ParseMode, Update},
     utils::command::BotCommands,
     Bot as TgBot,
 };
@@ -19,6 +19,8 @@ pub mod handlers;
 pub mod helpers;
 
 mod daily_events;
+mod diary;
+mod extractors;
 mod get_stats;
 mod how_was_your_day;
 mod setup_schedule;
@@ -46,32 +48,35 @@ pub async fn create_bot_and_dispatcher(pool: PgPool, config: &Config) -> Result<
     let plotter = Plotter::new(&mut pool.begin().await?, config.clone()).await?;
 
     let handler = dptree::entry()
+        // generic Command handler
         .branch(
-            Update::filter_message().branch(
+            Update::filter_message().chain(
                 dptree::entry()
                     .filter_command::<Command>()
                     .endpoint(handle_command),
             ),
         )
+        // save Poll response
         .branch(
             dptree::entry()
-                .filter_map(|update: Update| match update.kind {
-                    UpdateKind::Poll(poll) => Some(poll),
-                    _ => None,
-                })
+                .filter_map(extractors::get_poll)
                 .endpoint(handle_poll_update),
         )
+        // handle the case in which user is banned the bot
         .branch(Update::filter_my_chat_member().endpoint(handle_ban))
+        // generic callbacks handler
         .branch(Update::filter_callback_query().endpoint(handle_callback))
+        // setup schedule WebApp
         .branch(
-            Update::filter_message().branch(
-                dptree::entry()
-                    .filter_map(|message: Message| match message.kind {
-                        MessageKind::WebAppData(data) => Some(data),
-                        _ => None,
-                    })
-                    .endpoint(setup_schedule::handle_webapp),
-            ),
+            Update::filter_message()
+                .filter_map(extractors::get_web_app_data)
+                .endpoint(setup_schedule::handle_webapp),
+        )
+        // any other text message – append to diary
+        .branch(
+            Update::filter_message()
+                .filter_map(extractors::get_message_text)
+                .endpoint(diary::handlers::message::append_diary_entry),
         );
 
     Ok((

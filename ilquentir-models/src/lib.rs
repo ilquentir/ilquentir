@@ -1,5 +1,10 @@
 use sqlx::{Postgres, Transaction};
 
+pub type PgTransaction<'t> = Transaction<'t, Postgres>;
+
+mod diary_entry;
+pub use diary_entry::DiaryEntry;
+
 mod poll_answer;
 pub use poll_answer::PollAnswer;
 
@@ -20,5 +25,3 @@ pub use user::User;
 
 mod wide_how_was_your_day;
 pub use wide_how_was_your_day::WideHowWasYourDay;
-
-pub type PgTransaction<'t> = Transaction<'t, Postgres>;
