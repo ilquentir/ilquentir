@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use aws_sdk_s3::{types::ByteStream, Client, Region};
 use bytes::Bytes;
-use color_eyre::{eyre::ensure, Result};
+use color_eyre::{
+    eyre::{bail, ensure},
+    Result,
+};
 use csv_async::Terminator;
 use tokio::{
     fs::{File, OpenOptions},
@@ -46,7 +49,7 @@ impl Plotter {
                         .open(wide_path)
                         .await?
                 }
-                _ => return Err(e.into()),
+                _ => bail!(e),
             },
         };
         let wide = Arc::new(RwLock::new(wide));

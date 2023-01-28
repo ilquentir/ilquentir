@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use color_eyre::{eyre::eyre, Result};
+use color_eyre::{eyre::ensure, Result};
 use ilquentir_models::{PgTransaction, Poll};
 use teloxide::{
     payloads::SendPollSetters,
@@ -64,9 +64,7 @@ pub async fn send_poll(bot: &Bot, txn: &mut PgTransaction<'_>, poll: Poll) -> Re
 
 #[tracing::instrument(skip(bot, txn), err)]
 pub async fn overdue_poll(bot: &Bot, txn: &mut PgTransaction<'_>, poll: Poll) -> Result<()> {
-    if poll.tg_id.is_none() {
-        return Err(eyre!("trying to delete unpublished poll"));
-    };
+    ensure!(poll.tg_id.is_some(), "trying to delete unpublished poll");
 
     if let Some(message_id) = poll.tg_message_id {
         let response = bot
