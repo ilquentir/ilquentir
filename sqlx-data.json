@@ -1,5 +1,38 @@
 {
   "db": "PostgreSQL",
+  "0358e170c3294fd66a3ba9d4da18dcd0d938bbdf4f4ea46650c79ad90e38287b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "user_tg_id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "text",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "date_created",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text"
+        ]
+      }
+    },
+    "query": "\nINSERT INTO diary_entries (\n    user_tg_id, text\n)\nVALUES ($1, $2)\nRETURNING\n    user_tg_id,\n    text,\n    date_created\n            "
+  },
   "04b8cb6a0abb9993a16e634f342dd2266e048bcd3fdb7e255c4f9d063a296db6": {
     "describe": {
       "columns": [
@@ -549,6 +582,38 @@
       }
     },
     "query": "\nINSERT INTO polls (\n    chat_tg_id,\n    tg_id,\n    tg_message_id,\n    kind,\n    publication_date,\n    published\n)\nVALUES ($1, $2, $3, $4, $5, $6)\nRETURNING\n    id as \"id?\",\n    tg_id,\n    tg_message_id,\n    chat_tg_id,\n    kind as \"kind: PollKind\",\n    publication_date,\n    published\n"
+  },
+  "c226ad4f5f47cb16a95516a0f9495224084691b49318b126953d85d5fd370a47": {
+    "describe": {
+      "columns": [
+        {
+          "name": "user_tg_id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "text",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "date_created",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\nSELECT\n    user_tg_id,\n    text,\n    date_created\nFROM\n    diary_entries\nWHERE\n    user_tg_id = $1\n            "
   },
   "cb0fad5bbd847594176f786c6c69d3b6eae5899359552c9981923bf43b7e3106": {
     "describe": {
