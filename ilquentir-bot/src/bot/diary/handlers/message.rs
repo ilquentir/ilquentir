@@ -10,7 +10,7 @@ use ilquentir_models::DiaryEntry;
 
 use crate::bot::Bot;
 
-#[tracing::instrument(skip(bot, pool), err)]
+#[tracing::instrument(skip(bot, pool, msg_text), err)]
 pub async fn append_diary_entry(
     bot: Bot,
     pool: PgPool,
