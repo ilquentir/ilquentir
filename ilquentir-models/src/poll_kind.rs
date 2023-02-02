@@ -63,6 +63,7 @@ impl PollKind {
     ///
     /// ```rust
     /// # use time::macros::datetime;
+    /// # use ilquentir_models::PollKind;
     /// assert_eq!(
     ///     PollKind::HowWasYourDay.schedule_next(datetime!(2022-12-05 00:00 UTC)),
     ///     datetime!(2022-12-05 19:00 UTC),
