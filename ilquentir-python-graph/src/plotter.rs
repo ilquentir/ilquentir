@@ -146,7 +146,7 @@ impl Plotter {
             .arg(script_path)
             .arg(wide_path)
             .arg(user_tg_id.to_string())
-            .args(["2022-12-05", "2023-02-15"]);
+            .args(["2023-01-05", "2023-04-15"]);
 
         info!(python_command = ?command, "running python code");
         let output = command.output().await?;
