@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use aws_sdk_s3::{types::ByteStream, Client, Region};
+use aws_sdk_s3::{config::Region, primitives::ByteStream, Client};
 use bytes::Bytes;
 use color_eyre::{
     eyre::{bail, ensure},
@@ -175,7 +175,7 @@ impl Plotter {
         self.aws_client
             .put_object()
             .bucket(BUCKET)
-            .acl(aws_sdk_s3::model::ObjectCannedAcl::PublicRead)
+            .acl(aws_sdk_s3::types::ObjectCannedAcl::PublicRead)
             .key(&key)
             .content_type("text/html")
             .body(ByteStream::from(Bytes::from(graph.as_bytes().to_vec())))
