@@ -73,7 +73,9 @@ pub struct S3Config {
     /// S3 endpoint
     #[serde(rename = "aws_s3_endpoint")]
     pub endpoint: String,
-    /// Static hostname for the bucket, e.g. `https://ilquentir.fra15.digitaloceanspaces.com`
+    /// Static hostname for the bucket, e.g. `https://ilquentir.fra15.digitaloceanspaces.com`.
+    ///
+    /// This is used as a prefix for the generated URLs, which will users see.
     #[serde(rename = "aws_s3_static_url")]
     pub static_url: String,
 }
