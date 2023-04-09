@@ -19,8 +19,8 @@ COPY --from=planner /app/protoc /usr/local/bin/protoc
 COPY --from=planner /app/recipe.json recipe.json
 # Build dependencies - this is the caching Docker layer!
 RUN cargo chef cook --release --recipe-path recipe.json
-# Build application
 
+# Build application
 COPY . .
 RUN cargo build -p ilquentir-bot --release
 

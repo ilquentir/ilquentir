@@ -10,12 +10,15 @@ Main features:
 ## Development
 
 1. Ensure [Rust](https://rust-lang.org) is installed
-2. Obtain requred tokens:
+2. Ensure you have `portoc` available in your `$PATH`, you can get it from
+  [here](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation),
+  or from your package manager, e.g. `brew install protobuf` on macOS
+3. Obtain requred tokens:
    1. Telegram bot token, you can get one from [Bot Father](https://t.me/BotFather)
    2. [Honeycomb.io](https://honeycomb.io) API KEY
    3. S3-compatible storage credentials, I use [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces/) for this
-3. Create `.env` file with variables described in [Deployment](#deployment) section
-4. Run, for example via `cargo run`
+4. Create `.env` file with variables described in [Deployment](#deployment) section
+5. Run, for example via `cargo run`
 
 ## Deployment
 
