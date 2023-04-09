@@ -10,4 +10,5 @@ edition = "2021"
 color-eyre = { workspace = true }
 envy = { workspace = true }
 serde = { workspace = true }
+time = { workspace = true }
 humantime-serde = "1.1"

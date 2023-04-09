@@ -20,6 +20,7 @@ use url::Url;
 
 #[derive(Debug, Clone)]
 pub struct Plotter {
+    // FIXME: I use Arc<RwLock<File>> because I need to be able
     wide: Arc<RwLock<File>>,
     aws_client: Client,
     config: Config,
@@ -28,7 +29,7 @@ pub struct Plotter {
 impl Plotter {
     #[tracing::instrument(skip_all, err)]
     pub async fn new(txn: &mut PgTransaction<'_>, config: Config) -> Result<Self> {
-        let wide_path = &config.wide_how_was_your_day_path;
+        let wide_path = &config.graph.wide_how_was_your_day_path;
 
         let file_ = OpenOptions::new()
             .read(true)
@@ -53,11 +54,10 @@ impl Plotter {
             },
         };
         let wide = Arc::new(RwLock::new(wide));
-        const BUCKET: &str = "utterstep-public";
 
         let shared_config = aws_config::from_env()
-            .endpoint_url("https://fra1.digitaloceanspaces.com")
-            .region(Region::new("fra1"))
+            .endpoint_url(&config.s3.endpoint)
+            .region(Region::new(config.s3.region.clone()))
             .load()
             .await;
 
@@ -88,7 +88,7 @@ impl Plotter {
         let elapsed_since_update = wide_file.metadata().await?.modified()?.elapsed()?;
         debug!(?elapsed_since_update, "got following freshness info");
 
-        if !force && elapsed_since_update < self.config.wide_how_was_your_day_max_age {
+        if !force && elapsed_since_update < self.config.graph.wide_how_was_your_day_max_age {
             info!("wide table is in actual state");
 
             return Ok(false);
@@ -100,7 +100,7 @@ impl Plotter {
             .read(true)
             .write(true)
             .truncate(true)
-            .open(&self.config.wide_how_was_your_day_path)
+            .open(&self.config.graph.wide_how_was_your_day_path)
             .await?;
 
         // export data anew
@@ -133,10 +133,15 @@ impl Plotter {
     }
 
     /// Creates graph by calling python generator
+    ///
+    /// # Warning
+    ///
+    /// This function is guaranteed to fail if there is no data in wide table.
+    /// This is known issue and will be (hopefully :)) fixed in future.
     #[tracing::instrument(skip(self), err)]
     async fn plot(&self, user_tg_id: i64) -> Result<String> {
-        let script_path = &self.config.plotly_python_code_file;
-        let wide_path = &self.config.wide_how_was_your_day_path;
+        let script_path = &self.config.graph.plotly_python_code_file;
+        let wide_path = &self.config.graph.wide_how_was_your_day_path;
 
         let _wide = self.wide.read().await;
 
@@ -146,7 +151,10 @@ impl Plotter {
             .arg(script_path)
             .arg(wide_path)
             .arg(user_tg_id.to_string())
-            .args(["2023-01-05", "2023-04-15"]);
+            .args([
+                self.config.graph.start_date.to_string(),
+                self.config.graph.end_date.to_string(),
+            ]);
 
         info!(python_command = ?command, "running python code");
         let output = command.output().await?;
@@ -164,8 +172,6 @@ impl Plotter {
     /// Uploads gresulting graph to S3 (DigitalOcean Spaces, currently)
     #[tracing::instrument(skip(self, graph), fields(graph_len = graph.len()), err)]
     async fn upload_to_s3(&self, graph: &str, user_tg_id: i64) -> Result<Url> {
-        const BUCKET: &str = "utterstep-public";
-
         let key = format!(
             "{env}/graphs-v0/{user_tg_id}_{uuid}.html",
             env = &self.config.environment,
@@ -174,7 +180,7 @@ impl Plotter {
 
         self.aws_client
             .put_object()
-            .bucket(BUCKET)
+            .bucket(&self.config.s3.bucket)
             .acl(aws_sdk_s3::types::ObjectCannedAcl::PublicRead)
             .key(&key)
             .content_type("text/html")
@@ -182,8 +188,8 @@ impl Plotter {
             .send()
             .await?;
 
-        Ok(Url::parse(&format!(
-            "https://{BUCKET}.fra1.digitaloceanspaces.com/{key}"
-        ))?)
+        let static_hostname = &self.config.s3.static_url;
+
+        Ok(Url::parse(&format!("{static_hostname}/{key}"))?)
     }
 }

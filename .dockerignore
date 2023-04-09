@@ -7,4 +7,7 @@ target
 # data export
 db_export
 
+# GitHub configs
+.github
+
 Dockerfile

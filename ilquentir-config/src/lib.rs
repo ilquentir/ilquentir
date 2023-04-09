@@ -2,7 +2,25 @@ use std::{ops::Deref, path::PathBuf, sync::Arc, time::Duration};
 
 use color_eyre::Result;
 use serde::Deserialize;
+use time::Date;
 
+/// Configuration for the bot.
+///
+/// The config is Arc-wrapped internally, so it can be
+/// safely cloned and shared between threads.
+///
+/// Main scenario is to use `Config::from_env()`
+/// to get the configuration from the environment.
+///
+/// # Example
+/// ```
+/// use ilquentir_config::Config;
+///
+/// match Config::from_env() {
+///    Ok(config) => println!("Config: {config:?}"),
+///    Err(e) => println!("Error: {e}"),
+/// }
+/// ```
 #[derive(Debug, Clone)]
 pub struct Config(Arc<ConfigInner>);
 
@@ -34,6 +52,35 @@ pub struct ConfigInner {
     #[serde(with = "humantime_serde")]
     pub scheduler_interval: Duration,
 
+    /// S3 configuration
+    #[serde(default, flatten)]
+    pub s3: S3Config,
+
+    /// Configuration for the python-based mood graph
+    #[serde(default, flatten)]
+    pub graph: GraphConfig,
+}
+
+/// Configuration of an S3 storage
+#[derive(Debug, Deserialize)]
+pub struct S3Config {
+    /// Name of the bucket
+    #[serde(rename = "aws_s3_bucket")]
+    pub bucket: String,
+    /// Region of the bucket
+    #[serde(rename = "aws_default_region")]
+    pub region: String,
+    /// S3 endpoint
+    #[serde(rename = "aws_s3_endpoint")]
+    pub endpoint: String,
+    /// Static hostname for the bucket, e.g. `https://ilquentir.fra15.digitaloceanspaces.com`
+    #[serde(rename = "aws_s3_static_url")]
+    pub static_url: String,
+}
+
+/// Configuration for the python-based mood graph
+#[derive(Debug, Deserialize)]
+pub struct GraphConfig {
     /// Path for the wide_how_was_your_day export
     pub wide_how_was_your_day_path: PathBuf,
     /// Max tolerable age of wide_how_was_your_day table
@@ -42,16 +89,10 @@ pub struct ConfigInner {
     /// Path to python file, containing plotly graphing function
     pub plotly_python_code_file: PathBuf,
 
-    /// Response delay for today's summary
-    #[deprecated = "we do not send today's summary manually"]
-    #[serde(with = "humantime_serde")]
-    pub reply_delay: Duration,
-    /// Minimal response delay for today's summary
-    #[deprecated = "we do not send today's summary manually"]
-    #[serde(with = "humantime_serde", default = "default_min_reply_delay")]
-    pub min_reply_delay: Duration,
-}
-
-fn default_min_reply_delay() -> Duration {
-    Duration::from_secs(60 * 3)
+    /// Starting date for the graph
+    #[serde(rename = "graph_start_date")]
+    pub start_date: Date,
+    /// Ending date for the graph
+    #[serde(rename = "graph_end_date")]
+    pub end_date: Date,
 }
