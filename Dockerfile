@@ -1,13 +1,25 @@
-# Build
-FROM rust:1.68 AS builder
+FROM lukemathwalker/cargo-chef:latest-rust-1.68-slim AS chef
 
+## Prepare
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+## Build
+FROM chef AS builder
+RUN apt-get update && apt-get install protobuf-compiler --assume-yes --no-install-recommends \
+    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+    && rm -rf /var/lib/apt/lists/*
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
-RUN apt-get update && apt-get install protobuf-compiler --assume-yes
+COPY --from=planner recipe.json recipe.json
+# Build dependencies - this is the caching Docker layer!
+RUN cargo chef cook --release --recipe-path recipe.json
+# Build application
 
 COPY . .
 RUN cargo build -p ilquentir-bot --release
 
-# Deploy
+## Deploy
 FROM python:slim
 
 # locale

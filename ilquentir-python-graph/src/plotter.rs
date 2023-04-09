@@ -20,7 +20,9 @@ use url::Url;
 
 #[derive(Debug, Clone)]
 pub struct Plotter {
-    // FIXME: I use Arc<RwLock<File>> because I need to be able
+    // FIXME: I use Arc<RwLock<File>> because I recreate the file on every update.
+    // I think it's not the best solution, but I don't know how to do it better RN,
+    // truncating it via File::set_len() doesn't work.
     wide: Arc<RwLock<File>>,
     aws_client: Client,
     config: Config,
