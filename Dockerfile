@@ -14,6 +14,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 ## Build
 FROM chef AS builder
+WORKDIR /app
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 COPY --from=planner /app/protoc /usr/local/bin/protoc
 COPY --from=planner /app/recipe.json recipe.json
@@ -41,6 +42,6 @@ RUN pip install -r requirements.txt && pip cache purge
 COPY ilquentir-python-graph/python/main.py /plotly_graph.py
 
 # rust binary
-COPY --from=builder ./target/release/ilquentir-bot /ilquentir-bot
+COPY --from=builder /app/target/release/ilquentir-bot /ilquentir-bot
 
 CMD ["/ilquentir-bot"]
